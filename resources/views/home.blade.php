@@ -3,7 +3,7 @@
         <div class="col-md-8">
             <div class="card">
                 <div class="card-body">
-                    {{ Auth::user()->name }} are logged in!
+                    {{ $user_name }} are logged in!
                 </div>
 
                 <a class="dropdown-item" href="{{ route('logout') }}" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
