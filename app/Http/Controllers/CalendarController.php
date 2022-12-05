@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use App\Repositories\CalendarRepository;
+use App\Imports\CalendarImport;
+use Maatwebsite\Excel\Facades\Excel;
 
 class CalendarController extends Controller
 {
@@ -26,10 +28,10 @@ class CalendarController extends Controller
 
         $request->upfile->move(public_path('files'), $fileName);
 
-        $records = file(public_path('files').'/'.$fileName, FILE_IGNORE_NEW_LINES);
+        //$records = file(public_path('files').'/'.$fileName, FILE_IGNORE_NEW_LINES);
 
-        $this->CalendarRepo->insertCalendar_bulk($records);
-
-        return view('calendarDisplay', ['csvContents' => $records]);
+        Excel::import(new CalendarImport, public_path('files').'/'.$fileName);
+        
+        return redirect('calendar');
     }
 }
