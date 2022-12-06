@@ -33,8 +33,7 @@ class CalendarController extends Controller
 
     public function upload(Request $request)
     {
-        if($this->FormChk->checkUploadCSV($request))
-        {
+        if($this->FormChk->checkUploadCSV($request)) {
             $fileName = 'upload.csv';
             $request->upfile->move(public_path('files'), $fileName);
             $this->CalendarSrv->importCalendar(public_path('files').'/'.$fileName);

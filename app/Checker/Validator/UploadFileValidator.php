@@ -7,8 +7,7 @@ use Validator;
 class UploadFileValidator {
     public function validateUploadCSV($input)
     {
-        if($input->hasFile('upfile')==null)
-        {
+        if($input->hasFile('upfile')==null) {
             return false;
         }
 
@@ -18,8 +17,7 @@ class UploadFileValidator {
 
         $this->validator = Validator::make($input->all(), $rules);
 
-        if ($this->validator->fails())
-        {
+        if ($this->validator->fails()) {
             return false;
         }
 
