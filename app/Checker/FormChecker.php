@@ -2,7 +2,7 @@
 
 namespace App\Checker;
 
-use App\Checker\Validator\UploadFileValidator;
+use App\Validator\UploadFileValidator;
 
 class FormChecker 
 {

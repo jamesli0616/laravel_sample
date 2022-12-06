@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Checker\Validator;
+namespace App\Validator;
 
 use Validator;
 

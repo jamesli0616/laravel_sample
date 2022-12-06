@@ -15,11 +15,6 @@ class CalendarService
         $this->CalendarRepo = $CalendarRepository;
 	}
 
-    public function importCalendar($file)
-    {
-        $this->CalendarRepo->importCalendarCSV($file);
-    }
-
     public function displayCalendarPage($year)
     {
         return [

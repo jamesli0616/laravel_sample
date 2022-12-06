@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Repositories\Imports;
+namespace App\Imports;
 
 use App\Models\Calendar;
 use Illuminate\Support\Facades\Hash;

@@ -6,6 +6,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use App\Services\CalendarService;
 use App\Checker\FormChecker;
+use App\Imports\CalendarImport;
+use Maatwebsite\Excel\Facades\Excel;
 
 class CalendarController extends Controller
 {
@@ -34,9 +36,7 @@ class CalendarController extends Controller
     public function upload(Request $request)
     {
         if($this->FormChk->checkUploadCSV($request)) {
-            $fileName = 'upload.csv';
-            $request->upfile->move(public_path('files'), $fileName);
-            $this->CalendarSrv->importCalendar(public_path('files').'/'.$fileName);
+            Excel::import(new CalendarImport, $request->file('upfile'));
 
             return redirect('calendar');
         }   
