@@ -1,3 +1,4 @@
+@inject('CalendarPresenter', 'App\Presenters\CalendarPresenter')
 <head>
     <style>
         table, th, td {
@@ -29,7 +30,7 @@
                         <tr>
                             <td>{{ $rows['date'] }}</td>
                             <td>{{ $rows['weekdays'] }}</td>
-                            <td>{{ $rows['holiday'] }}</td>
+                            <td>{{ $CalendarPresenter->holiday($rows['holiday']) }}</td>
                             <td>{{ $rows['comment'] }}</td>
                         </tr>
                     @endforeach
