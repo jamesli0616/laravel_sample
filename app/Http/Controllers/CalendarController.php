@@ -5,8 +5,6 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use App\Repositories\CalendarRepository;
-use App\Imports\CalendarImport;
-use Maatwebsite\Excel\Facades\Excel;
 
 class CalendarController extends Controller
 {
@@ -18,20 +16,26 @@ class CalendarController extends Controller
 
     public function index(Request $request)
     {
+        return view('calendarDisplay', [
+            'calendarDate' => $this->CalendarRepo->getCalendarByYear($request['year'])->get()
+        ]);
+    }
+
+    public function showUpload(Request $request)
+    {
         return view('calendar');
     }
 
     public function upload(Request $request)
     {
-        // debug: always use test.csv file name
-        $fileName = 'test.csv';
+        $fileName = 'upload.csv';
 
         $request->upfile->move(public_path('files'), $fileName);
 
-        //$records = file(public_path('files').'/'.$fileName, FILE_IGNORE_NEW_LINES);
+        $this->CalendarRepo->importCalendarCSV(public_path('files').'/'.$fileName);
 
-        Excel::import(new CalendarImport, public_path('files').'/'.$fileName);
-        
-        return redirect('calendar');
+        return redirect()->route('calendar', [
+            'year' => date("Y")
+        ]);
     }
 }

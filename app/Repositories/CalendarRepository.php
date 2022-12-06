@@ -3,20 +3,28 @@
 namespace App\Repositories;
 
 use App\Models\Calendar;
+use App\Repositories\Imports\CalendarImport;
+use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Support\Facades\DB;
 
 class CalendarRepository
 {
-    protected $CalendarRepo;
+    protected $model;
 
     public function __construct(
         Calendar $Calendar
     )
     {
-        $this->CalendarRepo = $Calendar;
+        $this->model = $Calendar;
+    }
+
+    public function importCalendarCSV($csvFiles)
+    {
+        Excel::import(new CalendarImport, $csvFiles);
     }
 
     public function getCalendarByYear($year)
     {
-
+        return $this->model->select('*')->where(DB::raw('YEAR(date)'), $year);
     }
 }

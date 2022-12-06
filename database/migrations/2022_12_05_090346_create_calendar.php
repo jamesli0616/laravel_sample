@@ -14,7 +14,7 @@ return new class extends Migration
     public function up()
     {
         Schema::create('calendar', function (Blueprint $table) {
-            $table->string('date')->primary();
+            $table->date('date')->primary();
             $table->string('weekdays');
             $table->string('holiday');
             $table->string('comment')->nullable();
