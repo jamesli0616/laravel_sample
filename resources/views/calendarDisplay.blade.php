@@ -9,6 +9,14 @@
 <div class="container">
     <div class="row justify-content-center">
         <div class="col-md-8">
+            <a href="{{ route('upload') }}">
+                Return
+            </a>
+            @foreach ($calendarYears as $rows)
+                <a href="?year={{ $rows['years'] }}">
+                    {{ $rows['years'] }}
+                </a>
+            @endforeach
             <div class="card">
                 <table>
                     <tr>
@@ -26,9 +34,6 @@
                         </tr>
                     @endforeach
                 </table>
-                <a class="dropdown-item" href="{{ route('upload') }}">
-                    Return
-                </a>
             </div>
         </div>
     </div>

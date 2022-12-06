@@ -9,21 +9,25 @@ use App\Repositories\CalendarRepository;
 class CalendarController extends Controller
 {
     protected $CalendarRepo;
-    public function __construct(CalendarRepository $CalendarRepository)
+
+    public function __construct(
+        CalendarRepository $CalendarRepository
+    )
 	{
         $this->CalendarRepo = $CalendarRepository;
 	}
 
+    public function showUpload(Request $request)
+    {
+        return view('calendarUpload');
+    }
+
     public function index(Request $request)
     {
         return view('calendarDisplay', [
-            'calendarDate' => $this->CalendarRepo->getCalendarByYear($request['year'])->get()
+            'calendarDate' => $this->CalendarRepo->getCalendarByYear($request['year'])->get(),
+            'calendarYears' => $this->CalendarRepo->getCalendarDistinctYears()->get()
         ]);
-    }
-
-    public function showUpload(Request $request)
-    {
-        return view('calendar');
     }
 
     public function upload(Request $request)
@@ -34,8 +38,6 @@ class CalendarController extends Controller
 
         $this->CalendarRepo->importCalendarCSV(public_path('files').'/'.$fileName);
 
-        return redirect()->route('calendar', [
-            'year' => date("Y")
-        ]);
+        return redirect('calendar');
     }
 }

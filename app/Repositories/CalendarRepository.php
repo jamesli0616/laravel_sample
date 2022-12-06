@@ -27,4 +27,9 @@ class CalendarRepository
     {
         return $this->model->select('*')->where(DB::raw('YEAR(date)'), $year);
     }
+
+    public function getCalendarDistinctYears()
+    {
+        return $this->model->select(DB::raw('YEAR(date) as years'))->distinct(DB::raw('YEAR(date)'));
+    }
 }
