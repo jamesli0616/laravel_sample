@@ -11,11 +11,11 @@
         <div class="col-md-8">
             <a href="{{ route('upload') }}">
                 Return
-            </a>
+            </a>&nbsp;
             @foreach ($calendarYears as $rows)
                 <a href="?year={{ $rows['years'] }}">
                     {{ $rows['years'] }}
-                </a>
+                </a>&nbsp;
             @endforeach
             <div class="card">
                 <table>

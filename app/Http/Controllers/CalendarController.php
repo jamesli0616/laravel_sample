@@ -32,12 +32,17 @@ class CalendarController extends Controller
 
     public function upload(Request $request)
     {
-        $fileName = 'upload.csv';
+        if($request->hasFile('upfile'))
+        {
+            $fileName = 'upload.csv';
 
-        $request->upfile->move(public_path('files'), $fileName);
+            $request->upfile->move(public_path('files'), $fileName);
 
-        $this->CalendarRepo->importCalendarCSV(public_path('files').'/'.$fileName);
+            $this->CalendarRepo->importCalendarCSV(public_path('files').'/'.$fileName);
 
-        return redirect('calendar');
+            return redirect('calendar');
+        }   
+        
+        return back()->withErrors(['message' => 'No file selected']);
     }
 }

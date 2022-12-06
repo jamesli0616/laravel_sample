@@ -9,6 +9,9 @@
                     </div>
                     <button class="btn btn-info" type="submit">Upload file</button>
                 </form>
+                @if($errors->any())
+                    <h4>{{$errors->first()}}</h4>
+                @endif
             </div>
         </div>
     </div>
