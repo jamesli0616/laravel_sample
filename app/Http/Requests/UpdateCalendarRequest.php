@@ -28,6 +28,7 @@ class UpdateCalendarRequest extends FormRequest
         return [
             'edit_date' => 'required',
             'holiday' => ['required', new EnumValue(HolidayEnum::class, false)],
+            'comment' => 'string|nullable'
         ];
     }
 }

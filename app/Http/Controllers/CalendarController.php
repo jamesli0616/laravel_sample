@@ -29,26 +29,26 @@ class CalendarController extends Controller
 
     public function index(DisplayCalendarRequest $request)
     {
-        $request->validated();
+        $validated = $request->validated();
 
-        return view('calendarDisplay', $this->CalendarService->displayCalendarPage($request['year']));
+        return view('calendarDisplay', $this->CalendarService->displayCalendarPage($validated['year']));
     }
 
     public function upload(UploadCSVRequest $request)
     {
-        $request->validated();
+        $validated = $request->validated();
         
-        Excel::import(new CalendarImport, $request->file('upfile'));
+        Excel::import(new CalendarImport, $validated['upfile']);
 
-        return redirect('calendar');
+        return redirect()->route('calendar', ['year' => DATE('Y')]);
     }
 
     public function update(UpdateCalendarRequest $request)
     {
-        $request->validated();
+        $validated = $request->validated();
         
-        $this->CalendarService->updateCalendarByDate($request['edit_date'], $request['holiday'], $request['comment']);
+        $this->CalendarService->updateCalendarByDate($validated['edit_date'], $validated['holiday'], $validated['comment']);
 
-        return redirect()->route('calendar', ['year' => date_parse($request['edit_date'])['year']]);
+        return redirect()->route('calendar', ['year' => date_parse($validated['edit_date'])['year']]);
     }
 }
