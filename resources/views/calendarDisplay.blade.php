@@ -19,19 +19,27 @@
                     {{ $rows['years'] }}
                 </a>&nbsp;
             @endforeach
-            <form action="updateCalendar" method="post">
-                @csrf
-                <input type="text" name="edit_date" readonly>
-                {{ Form::select('holiday', array(
-                    '0' => $CalendarPresenter->holiday(0),
-                    '2' => $CalendarPresenter->holiday(2)),
-                    0
-                ) }}
-                {{ Form::text('comment') }}
-                <button>
-                    <span>送出</span>
-                </button>
-            </form>
+            <div id="updateCalendar_form" style="z-index: 1;position: fixed;margin-left:300px;border:solid;padding:3px;display:none;">
+                <form action="updateCalendar" method="post">
+                    @csrf
+                    日期：<input type="text" name="edit_date" readonly>
+                    <br>
+                    假日：{{ Form::select('holiday', array(
+                        '0' => $CalendarPresenter->holiday(0),
+                        '2' => $CalendarPresenter->holiday(2)),
+                        0
+                    ) }}
+                    <br>
+                    備註：{{ Form::text('comment') }}
+                    <br>
+                    <button>
+                        <span>送出</span>
+                    </button>
+                    <button type="button" onclick="$('#updateCalendar_form').hide();">
+                        <span>取消</span>
+                    </button>
+                </form>
+            </div>
             <div class="card">
                 <table>
                     <tr>
@@ -65,5 +73,6 @@
         $("select option").filter(function() {
             return $(this).text() == setHoliday;
         }).prop('selected', true);
+        $('#updateCalendar_form').show();
     }
 </script>
