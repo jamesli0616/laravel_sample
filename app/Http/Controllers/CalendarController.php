@@ -3,51 +3,59 @@
 namespace App\Http\Controllers;
  
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 use App\Services\CalendarService;
-use App\Checker\FormChecker;
+use App\Checker\RequestChecker;
 use App\Imports\CalendarImport;
 use Maatwebsite\Excel\Facades\Excel;
 
 class CalendarController extends Controller
 {
-    protected $CalendarSrv;
-    protected $FormChk;
+    protected $CalendarService;
+    protected $RequestChecker;
 
     public function __construct(
         CalendarService $CalendarService,
-        FormChecker $FormChecker
+        RequestChecker $RequestChecker
     )
 	{
-        $this->CalendarSrv = $CalendarService;
-        $this->FormChk = $FormChecker;
+        $this->CalendarService = $CalendarService;
+        $this->RequestChecker = $RequestChecker;
 	}
 
-    public function showUpload(Request $request)
+    public function showUpload()
     {
         return view('calendarUpload');
     }
 
     public function index(Request $request)
     {
-        return view('calendarDisplay', $this->CalendarSrv->displayCalendarPage($request['year']));
+        if($this->RequestChecker->checkRequestYear($request)) {
+
+            return view('calendarDisplay', $this->CalendarService->displayCalendarPage($request['year']));
+        }   
+        
+        return view('calendarDisplay', $this->CalendarService->displayCalendarPage(Date('Y')));
     }
 
     public function upload(Request $request)
     {
-        if($this->FormChk->checkUploadCSV($request)) {
+        if($this->RequestChecker->checkUploadCSVFile($request)) {
             Excel::import(new CalendarImport, $request->file('upfile'));
 
             return redirect('calendar');
         }   
         
-        return view('calendarUpload', ['message' => 'upload error']);
+        return back()->withErrors(['message' => 'request fails']);
     }
 
     public function update(Request $request)
     {
-        $this->CalendarSrv->updateCalendarByDate($request['edit_date'], $request['holiday'], $request['comment']);
+        if($this->RequestChecker->checkUpdateCalendar($request)) {
+            $this->CalendarService->updateCalendarByDate($request['edit_date'], $request['holiday'], $request['comment']);
 
-        return redirect()->route('calendar', ['year' => date_parse($request['edit_date'])['year']]);
+            return redirect()->route('calendar', ['year' => date_parse($request['edit_date'])['year']]);
+        } 
+
+        return back()->withErrors(['message' => 'request fails']);
     }
 }

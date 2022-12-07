@@ -6,7 +6,7 @@
                     {{ $user_name }} are logged in!
                 </div>
 
-                <a class="dropdown-item" href="{{ route('logout') }}" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                <a class="dropdown-item" href="{{ route('logout') }}" onclick="logout();">
                     Logout
                 </a>
 
@@ -17,3 +17,10 @@
         </div>
     </div>
 </div>
+<script>
+function logout()
+{
+    event.preventDefault();
+    document.getElementById('logout-form').submit();
+}
+</script>

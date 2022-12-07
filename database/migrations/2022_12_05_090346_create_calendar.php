@@ -16,7 +16,7 @@ return new class extends Migration
         Schema::create('calendar', function (Blueprint $table) {
             $table->date('date')->primary();
             $table->string('weekdays');
-            $table->string('holiday');
+            $table->tinyinteger('holiday');
             $table->string('comment')->nullable();
             $table->timestamps();
         });

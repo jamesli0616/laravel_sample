@@ -17,11 +17,7 @@
                     <br>
                     <button class="btn btn-info" type="submit">Upload file</button>
                 </form>
-                @isset($message)
-                    <h4>{{$message}}</h4>
-                @endisset
             </div>
-
         </div>
     </div>
 </div>

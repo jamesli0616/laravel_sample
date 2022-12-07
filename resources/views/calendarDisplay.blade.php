@@ -26,6 +26,7 @@
                     <br>
                     假日：{{ Form::select('holiday', array(
                         '0' => $CalendarPresenter->holiday(0),
+                        '1' => $CalendarPresenter->holiday(1),
                         '2' => $CalendarPresenter->holiday(2)),
                         0
                     ) }}
