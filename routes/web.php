@@ -21,5 +21,6 @@ Route::get('login', 'App\Http\Controllers\LoginController@index');
 Route::post('logout', 'App\Http\Controllers\LoginController@logout')->name('logout');
 
 Route::get('calendar', 'App\Http\Controllers\CalendarController@index')->name('calendar');
-Route::get('upload', 'App\Http\Controllers\CalendarController@showUpload');
-Route::post('upload', 'App\Http\Controllers\CalendarController@upload')->name("upload");
+Route::get('uploadCalendar', 'App\Http\Controllers\CalendarController@showUpload');
+Route::post('uploadCalendar', 'App\Http\Controllers\CalendarController@upload')->name("uploadCalendar");
+Route::post('updateCalendar', 'App\Http\Controllers\CalendarController@update')->name("updateCalendar");

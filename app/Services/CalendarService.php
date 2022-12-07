@@ -22,4 +22,9 @@ class CalendarService
             'calendarYears' => $this->CalendarRepo->getCalendarDistinctYears()->get()
         ];
     }
+
+    public function updateCalendarByDate($date, $holiday, $comment)
+    {
+        $this->CalendarRepo->updateCalendarByDate($date, $holiday, $comment);
+    }
 }

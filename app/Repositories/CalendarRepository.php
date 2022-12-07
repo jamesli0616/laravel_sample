@@ -27,4 +27,12 @@ class CalendarRepository
     {
         return $this->model->select(DB::raw('YEAR(date) as years'))->distinct(DB::raw('YEAR(date)'));
     }
+
+    public function updateCalendarByDate($date, $holiday, $comment)
+    {
+        $this->model->where('date', $date)->update([
+            'holiday' => $holiday,
+            'comment' => $comment
+        ]);
+    }
 }

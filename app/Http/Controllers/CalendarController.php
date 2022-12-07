@@ -43,4 +43,11 @@ class CalendarController extends Controller
         
         return view('calendarUpload', ['message' => 'upload error']);
     }
+
+    public function update(Request $request)
+    {
+        $this->CalendarSrv->updateCalendarByDate($request['edit_date'], $request['holiday'], $request['comment']);
+
+        return redirect()->route('calendar', ['year' => date_parse($request['edit_date'])['year']]);
+    }
 }
