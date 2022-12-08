@@ -4,6 +4,14 @@
         table, th, td {
             border: 1px solid black;
             border-collapse: collapse;
+            text-align:center;
+        }
+        td {
+            width:48px;
+            height:48px;
+        }
+        .empty {
+            background-color:grey;
         }
     </style>
 </head>
@@ -19,7 +27,7 @@
                     {{ $rows['years'] }}
                 </a>&nbsp;
             @endforeach
-            <div id="updateCalendar_form" style="z-index: 1;position: fixed;margin-left:300px;border:solid;padding:3px;display:none;">
+            <div id="updateCalendar_form" style="z-index: 1;position: fixed;margin-left:380px;border:solid;padding:3px;display:none;">
                 <form action="{{ route('updateCalendar') }}" method="post">
                     @csrf
                     日期：<input type="text" name="edit_date" readonly>
@@ -43,20 +51,41 @@
             </div>
             <div class="card">
                 <table>
+                    <?php $month = 1 ?>
                     <tr>
-                        <th>西元日期</th>
-                        <th>星期</th>
-                        <th>是否放假</th>
-                        <th>備註</th>
+                        <th colspan="7">{{ $month }}月</th>
                     </tr>
-                    @foreach ($calendarDate as $rows)
-                        <tr onclick="loadCalendarDate(this);">
-                            <td>{{ $rows['date'] }}</td>
-                            <td>{{ $rows['weekdays'] }}</td>
-                            <td>{{ $CalendarPresenter->holiday($rows['holiday']) }}</td>
-                            <td>{{ $rows['comment'] }}</td>
-                        </tr>
-                    @endforeach
+                    <tr>
+                        <th>日</th><th>一</th><th>二</th><th>三</th><th>四</th><th>五</th><th>六</th>
+                    </tr>
+                    <tr>
+                        @if(date('w', strtotime($calendarDate[0]['date'])) != 0)
+                            @for($i = 0 ; $i < date('w', strtotime($calendarDate[0]['date']));$i++)
+                                <td class="empty"></td>
+                            @endfor
+                        @endif
+                        @foreach ($calendarDate as $rows)
+                            @if($month != date('m', strtotime($rows['date'])))
+                                @for($i = 0 ; $i < 7 - date('w', strtotime($rows['date']));$i++)
+                                    <td class="empty"></td>
+                                @endfor
+                                </tr><tr>
+                                <?php $month++ ?>
+                                <th colspan="7">{{ $month }}月</th></tr><tr>
+                                <th>日</th><th>一</th><th>二</th><th>三</th><th>四</th><th>五</th><th>六</th>
+                                </tr><tr>
+                                @if(date('w', strtotime($rows['date'])) != 0)
+                                    @for($i = 0 ; $i < date('w', strtotime($rows['date']));$i++)
+                                        <td class="empty"></td>
+                                    @endfor
+                                @endif
+                            @endif
+                            <td onclick="loadCalendarDate(this);" id="{{$rows['date']}}" holiday-type="{{$rows['holiday']}}">{{ $rows['comment'] }}</td>
+                            @if(date('w', strtotime($rows['date'])) == 6 )
+                                </tr><tr>
+                            @endif
+                        @endforeach
+                    </tr>
                 </table>
             </div>
         </div>
@@ -66,13 +95,13 @@
 <script>
     function loadCalendarDate(element)
     {
-        let setDate = $(element).find('td').eq(0).text();
-        let setHoliday = $(element).find('td').eq(2).text();
-        let setComment = $(element).find('td').eq(3).text();
+        let setDate = $(element).attr('id');
+        let setHoliday = $(element).attr('holiday-type');
+        let setComment = $(element).text();
         $('input[name=\'edit_date\']').val(setDate);
         $('input[name=\'comment\']').val(setComment);
         $("select option").filter(function() {
-            return $(this).text() == setHoliday;
+            return $(this).val() == setHoliday;
         }).prop('selected', true);
         $('#updateCalendar_form').show();
     }
