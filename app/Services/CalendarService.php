@@ -6,25 +6,25 @@ use App\Repositories\CalendarRepository;
 
 class CalendarService
 {
-    protected $CalendarRepo;
+    protected $CalendarRepository;
 
     public function __construct(
         CalendarRepository $CalendarRepository
     )
 	{
-        $this->CalendarRepo = $CalendarRepository;
+        $this->CalendarRepository = $CalendarRepository;
 	}
 
     public function displayCalendarPage(int $year)
     {
         return [
-            'calendarDate' => $this->CalendarRepo->getCalendarByYear($year)->get(),
-            'calendarYears' => $this->CalendarRepo->getCalendarDistinctYears()->get()
+            'calendarDate' => $this->CalendarRepository->getCalendarByYear($year)->get(),
+            'calendarYears' => $this->CalendarRepository->getCalendarDistinctYears()->get()
         ];
     }
 
     public function updateCalendarByDate(string $date, int $holiday, string $comment)
     {
-        $this->CalendarRepo->updateCalendarByDate($date, $holiday, $comment);
+        $this->CalendarRepository->updateCalendarByDate($date, $holiday, $comment);
     }
 }
