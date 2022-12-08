@@ -51,40 +51,34 @@
             </div>
             <div class="card">
                 <table>
-                    <?php $month = 1 ?>
-                    <tr>
-                        <th colspan="7">{{ $month }}月</th>
-                    </tr>
-                    <tr>
-                        <th>日</th><th>一</th><th>二</th><th>三</th><th>四</th><th>五</th><th>六</th>
-                    </tr>
-                    <tr>
-                        @if(date('w', strtotime($calendarDate[0]['date'])) != 0)
-                            @for($i = 0 ; $i < date('w', strtotime($calendarDate[0]['date']));$i++)
-                                <td class="empty"></td>
-                            @endfor
-                        @endif
-                        @foreach ($calendarDate as $rows)
-                            @if($month != date('m', strtotime($rows['date'])))
-                                @for($i = 0 ; $i < 7 - date('w', strtotime($rows['date']));$i++)
-                                    <td class="empty"></td>
-                                @endfor
-                                </tr><tr>
-                                <?php $month++ ?>
+                    @php 
+                        $month = 0
+                    @endphp
+                    @foreach ($calendarDate as $rows)
+                        @if($month != date('m', strtotime($rows['date'])))
+                            @php 
+                                $month++
+                            @endphp
+                            <tr>
                                 <th colspan="7">{{ $month }}月</th></tr><tr>
                                 <th>日</th><th>一</th><th>二</th><th>三</th><th>四</th><th>五</th><th>六</th>
-                                </tr><tr>
-                                @if(date('w', strtotime($rows['date'])) != 0)
-                                    @for($i = 0 ; $i < date('w', strtotime($rows['date']));$i++)
-                                        <td class="empty"></td>
-                                    @endfor
-                                @endif
+                            </tr>
+                            <tr>
+                            @for($i = 0 ; $i < date('w', strtotime($rows['date'])) - 7;$i++)
+                                <td class="empty"></td>
+                            @endfor
+                            </tr><tr>
+                            @if(date('w', strtotime($rows['date'])) != 0)
+                                @for($i = 0 ; $i < date('w', strtotime($rows['date']));$i++)
+                                    <td class="empty"></td>
+                                @endfor
                             @endif
-                            <td onclick="loadCalendarDate(this);" id="{{$rows['date']}}" holiday-type="{{$rows['holiday']}}">{{ $rows['comment'] }}</td>
-                            @if(date('w', strtotime($rows['date'])) == 6 )
-                                </tr><tr>
-                            @endif
-                        @endforeach
+                        @endif
+                        <td onclick="loadCalendarDate(this);" id="{{$rows['date']}}" holiday-type="{{$rows['holiday']}}">{{ $rows['comment'] }}</td>
+                        @if(date('w', strtotime($rows['date'])) == 6 )
+                            </tr><tr>
+                        @endif
+                    @endforeach
                     </tr>
                 </table>
             </div>
