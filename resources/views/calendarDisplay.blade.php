@@ -15,12 +15,12 @@
             </a>
             <br>
             @foreach ($calendarYears as $rows)
-                <a href="?year={{ $rows['years'] }}">
+                <a href="/showCalendar/{{ $rows['years'] }}">
                     {{ $rows['years'] }}
                 </a>&nbsp;
             @endforeach
             <div id="updateCalendar_form" style="z-index: 1;position: fixed;margin-left:300px;border:solid;padding:3px;display:none;">
-                <form action="updateCalendar" method="post">
+                <form action="{{ route('updateCalendar') }}" method="post">
                     @csrf
                     日期：<input type="text" name="edit_date" readonly>
                     <br>

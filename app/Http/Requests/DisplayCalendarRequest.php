@@ -6,6 +6,20 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class DisplayCalendarRequest extends FormRequest
 {
+     /**
+     * Get data to be validated from the request.
+     *
+     * @return array
+     */
+    public function validationData()
+    {
+        if ($this->route()) {
+            return $this->all() + $this->route()->parameters();
+        }
+
+        return parent::validationData();
+    }
+
     /**
      * Determine if the user is authorized to make this request.
      *
@@ -24,7 +38,7 @@ class DisplayCalendarRequest extends FormRequest
     public function rules()
     {
         return [
-            'year' => 'required|digits:4|integer|min:1900|max:'.(date('Y')+1)
+            'year' => 'required|digits:4|integer|min:1900'
         ];
     }
 }

@@ -3,7 +3,7 @@
         <div class="col-md-8">
             <div>
                 <h3>上傳行事曆檔案
-                    <a href="{{ route('calendar') }}?year={{ DATE('Y') }}">
+                    <a href="{{ route('showCalendar') }}/{{ DATE('Y') }}">
                         顯示行事曆
                     </a>
                 </h3>

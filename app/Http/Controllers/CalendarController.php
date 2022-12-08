@@ -30,7 +30,7 @@ class CalendarController extends Controller
     public function index(DisplayCalendarRequest $request)
     {
         $validated = $request->validated();
-
+        
         return view('calendarDisplay', $this->CalendarService->displayCalendarPage($validated['year']));
     }
 
@@ -40,15 +40,19 @@ class CalendarController extends Controller
         
         Excel::import(new CalendarImport, $validated['upfile']);
 
-        return redirect()->route('calendar', ['year' => DATE('Y')]);
+        return redirect()->route('showCalendar', ['year' => DATE('Y')]);
     }
 
     public function update(UpdateCalendarRequest $request)
     {
         $validated = $request->validated();
         
-        $this->CalendarService->updateCalendarByDate($validated['edit_date'], $validated['holiday'], $validated['comment']);
+        $this->CalendarService->updateCalendarByDate(
+            $validated['edit_date'],
+            $validated['holiday'],
+            $validated['comment'] == null?'':$validated['comment']
+        );
 
-        return redirect()->route('calendar', ['year' => date_parse($validated['edit_date'])['year']]);
+        return redirect()->route('showCalendar', ['year' => date_parse($validated['edit_date'])['year']]);
     }
 }

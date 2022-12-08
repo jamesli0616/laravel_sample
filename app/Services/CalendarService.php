@@ -15,7 +15,7 @@ class CalendarService
         $this->CalendarRepo = $CalendarRepository;
 	}
 
-    public function displayCalendarPage($year)
+    public function displayCalendarPage(int $year)
     {
         return [
             'calendarDate' => $this->CalendarRepo->getCalendarByYear($year)->get(),
@@ -23,7 +23,7 @@ class CalendarService
         ];
     }
 
-    public function updateCalendarByDate($date, $holiday, $comment)
+    public function updateCalendarByDate(string $date, int $holiday, string $comment)
     {
         $this->CalendarRepo->updateCalendarByDate($date, $holiday, $comment);
     }
