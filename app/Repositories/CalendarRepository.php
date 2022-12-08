@@ -3,7 +3,6 @@
 namespace App\Repositories;
 
 use App\Models\Calendar;
-use App\Repositories\Imports\CalendarImport;
 use Illuminate\Support\Facades\DB;
 
 class CalendarRepository

@@ -20,7 +20,6 @@ Route::post('login', 'App\Http\Controllers\LoginController@login')->name('login'
 Route::get('login', 'App\Http\Controllers\LoginController@index');
 Route::post('logout', 'App\Http\Controllers\LoginController@logout')->name('logout');
 
-
 Route::get('/editCalendar/uploadCalendar', 'App\Http\Controllers\CalendarController@showUpload');
 Route::post('/editCalendar/uploadCalendar', 'App\Http\Controllers\CalendarController@upload')->name("uploadCalendar");
 Route::post('/editCalendar/updateCalendar', 'App\Http\Controllers\CalendarController@update')->name("updateCalendar");

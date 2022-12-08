@@ -60,13 +60,15 @@
                                 $month++
                             @endphp
                             <tr>
-                                <th colspan="7">{{ $month }}月</th></tr><tr>
+                                <th colspan="7">{{ $month }}月</th>
+                            </tr>
+                            <tr>
                                 <th>日</th><th>一</th><th>二</th><th>三</th><th>四</th><th>五</th><th>六</th>
                             </tr>
                             <tr>
-                            @for($i = 0 ; $i < date('w', strtotime($rows['date'])) - 7;$i++)
-                                <td class="empty"></td>
-                            @endfor
+                                @for($i = 0 ; $i < date('w', strtotime($rows['date'])) - 7;$i++)
+                                    <td class="empty"></td>
+                                @endfor
                             </tr><tr>
                             @if(date('w', strtotime($rows['date'])) != 0)
                                 @for($i = 0 ; $i < date('w', strtotime($rows['date']));$i++)

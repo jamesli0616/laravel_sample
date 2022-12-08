@@ -2,7 +2,6 @@
  
 namespace App\Http\Controllers;
  
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class HomeController extends Controller
@@ -12,7 +11,7 @@ class HomeController extends Controller
 		$this->middleware('auth');
 	}
 
-    public function index(Request $request)
+    public function index()
     {
         return view('home', ['user_name' => Auth::user()->name]);
     }
