@@ -24,4 +24,4 @@ Route::post('logout', 'App\Http\Controllers\LoginController@logout')->name('logo
 Route::get('/editCalendar/uploadCalendar', 'App\Http\Controllers\CalendarController@showUpload');
 Route::post('/editCalendar/uploadCalendar', 'App\Http\Controllers\CalendarController@upload')->name("uploadCalendar");
 Route::post('/editCalendar/updateCalendar', 'App\Http\Controllers\CalendarController@update')->name("updateCalendar");
-Route::get('/showCalendar/{year?}', 'App\Http\Controllers\CalendarController@index')->name('showCalendar');
+Route::get('/showCalendar/{year}', 'App\Http\Controllers\CalendarController@index')->name('showCalendar');
