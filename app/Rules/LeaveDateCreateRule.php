@@ -21,6 +21,9 @@ class LeaveDateCreateRule implements InvokableRule
             return $fail('日期空白');
         }
         $valid = DB::table('calendar')->select('holiday')->where('date', $value)->get();
+        if ($valid->count() == 0) {
+            return $fail('行事曆尚未建立');
+        }
         if ($valid[0]->holiday == 2) {
             return $fail('日期為假日');
         }
