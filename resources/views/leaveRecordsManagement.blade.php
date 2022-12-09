@@ -30,7 +30,8 @@
             <div id="validLeaveRecord_form" style="z-index: 1;position: fixed;margin-left:500px;border:solid;padding:3px;">
                 <form action="{{ route('validLeaveRecordAdmin') }}" method="post">
                     @csrf
-                    User：{{ Form::text('user_id', null, ['readonly']) }}
+                    {{ Form::hidden('user_id', null, ['readonly']) }}
+                    User：{{ Form::text('user_name', null, ['readonly']) }}
                     <br>
                     日期：{{ Form::text('leave_date', null, ['readonly']) }}
                     <br>
@@ -59,7 +60,7 @@
                     </tr>
                     @foreach ($leaveCalendar as $rows)
                         <tr id="{{$rows['leave_date']}}" onclick="loadValidLeaveRecord(this);">
-                            <td>{{ $rows['user_id'] }}</td>
+                            <td user_id="{{ $rows['user_id'] }}">{{ $rows['name'] }}</td>
                             <td>{{ date('m-d', strtotime($rows['leave_date'])) }}</td>
                             <td>{{ $LeaveRecordsPresenter->leaveType($rows['leave_type']) }}</td>
                             <td>{{ $rows['leave_comment'] }}</td>
@@ -77,9 +78,11 @@
 <script>
     function loadValidLeaveRecord(element)
     {
-        let setId = $(element).find('td').eq(0).text();
+        let setId = $(element).find('td').eq(0).attr('user_id');
+        let setName = $(element).find('td').eq(0).text();
         let setDate = $(element).attr('id');
         $('input[name=\'user_id\']').val(setId);
+        $('input[name=\'user_name\']').val(setName);
         $('input[name=\'leave_date\']').val(setDate);
     }
 </script>
