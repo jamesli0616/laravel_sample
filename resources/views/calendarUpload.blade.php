@@ -1,12 +1,11 @@
 <div class="container">
     <div class="row justify-content-center">
         <div class="col-md-8">
+            <a href="{{ route('home') }}">
+                首頁
+            </a>
             <div>
-                <h3>上傳行事曆檔案
-                    <a href="{{ route('showCalendar', DATE('Y')) }}">
-                        顯示行事曆
-                    </a>
-                </h3>
+                <h3>上傳行事曆檔案</h3>
             </div>
             <div style="border-style: solid;margin: 1px auto;padding: 2px;" >
                 <form action="{{route('uploadCalendar')}}" method="post" enctype="multipart/form-data">

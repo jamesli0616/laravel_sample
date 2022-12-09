@@ -18,37 +18,42 @@
 <div class="container">
     <div class="row justify-content-center">
         <div class="col-md-8">
-            <a href="{{ route('uploadCalendar') }}">
-                Return
+            <a href="{{ route('home') }}">
+                Home
             </a>
             <br>
             @foreach ($calendarYears as $rows)
                 <a href="{{ route('showCalendar', $rows['years']) }}">
                     {{ $rows['years'] }}
-                </a>&nbsp;
+                </a>/
             @endforeach
-            <div id="updateCalendar_form" style="z-index: 1;position: fixed;margin-left:380px;border:solid;padding:3px;display:none;">
-                <form action="{{ route('updateCalendar') }}" method="post">
-                    @csrf
-                    日期：<input type="text" name="edit_date" readonly>
-                    <br>
-                    假日：{{ Form::select('holiday', array(
-                        '0' => $CalendarPresenter->holiday(0),
-                        '1' => $CalendarPresenter->holiday(1),
-                        '2' => $CalendarPresenter->holiday(2)),
-                        0
-                    ) }}
-                    <br>
-                    備註：{{ Form::text('comment') }}
-                    <br>
-                    <button>
-                        <span>送出</span>
-                    </button>
-                    <button type="button" onclick="$('#updateCalendar_form').hide();">
-                        <span>取消</span>
-                    </button>
-                </form>
-            </div>
+            <a href="{{ route('showLeaveCalendar', DATE('Y')) }}">
+                請假表
+            </a>
+            @if( Auth::user()->user_type == 1 )
+                <div id="updateCalendar_form" style="z-index: 1;position: fixed;margin-left:380px;border:solid;padding:3px;display:none;">
+                    <form action="{{ route('updateCalendar') }}" method="post">
+                        @csrf
+                        日期：{{ Form::text('edit_date', null, ['readonly']) }}
+                        <br>
+                        假日：{{ Form::select('holiday', array(
+                            '0' => $CalendarPresenter->holiday(0),
+                            '1' => $CalendarPresenter->holiday(1),
+                            '2' => $CalendarPresenter->holiday(2)),
+                            0
+                        ) }}
+                        <br>
+                        備註：{{ Form::text('comment') }}
+                        <br>
+                        <button>
+                            <span>送出</span>
+                        </button>
+                        <button type="button" onclick="$('#updateCalendar_form').hide();">
+                            <span>取消</span>
+                        </button>
+                    </form>
+                </div>
+            @endif
             <div class="card">
                 <table>
                     @php 
