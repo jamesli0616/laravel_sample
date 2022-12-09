@@ -5,6 +5,7 @@ namespace App\Http\Requests;
 use Illuminate\Foundation\Http\FormRequest;
 use BenSampo\Enum\Rules\EnumValue;
 use App\Enums\LeaveRecordEnum;
+use App\Rules\LeaveDateCreateRule;
 
 class LeaveRecordCreateRequest extends FormRequest
 {
@@ -27,7 +28,7 @@ class LeaveRecordCreateRequest extends FormRequest
     {
         return [
             'user_id' => 'required',
-            'leave_date' => 'required',
+            'leave_date' => [new LeaveDateCreateRule],
             'leave_type' => ['required', new EnumValue(LeaveRecordEnum::class, false)],
             'leave_comment' => 'required',
             'leave_start' => 'required',
@@ -45,7 +46,6 @@ class LeaveRecordCreateRequest extends FormRequest
     public function messages()
     {
         return [
-            'leave_date' => '請假時間不得空白',
             'leave_comment' => '請假事由不得空白'
         ];
     }

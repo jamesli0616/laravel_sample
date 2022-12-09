@@ -51,7 +51,7 @@ class LeaveRecordsController extends Controller
     public function create(LeaveRecordCreateRequest $request)
     {
         $validated = $request->validated();
- 
+        
         $this->LeaveRecordsService->createLeaveRecords(
             $validated['user_id'],
             $validated['leave_date'],

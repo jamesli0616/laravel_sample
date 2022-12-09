@@ -23,6 +23,11 @@ class CalendarService
         ];
     }
 
+    public function getCalendarIsHolidayByDate(string $date)
+    {
+        return $this->CalendarRepository->getCalendarIsHolidayByDate($date)->get();
+    }
+
     public function updateCalendarByDate(string $date, int $holiday, string $comment)
     {
         $this->CalendarRepository->updateCalendarByDate($date, $holiday, $comment);
