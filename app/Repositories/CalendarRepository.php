@@ -28,12 +28,6 @@ class CalendarRepository
         return $this->model->select(DB::raw('YEAR(date) as years'))->distinct(DB::raw('YEAR(date)'));
     }
 
-    // 取得該日假別狀態 by 日期
-    public function getCalendarIsHolidayByDate(string $date)
-    {
-        return $this->model->select('holiday')->where('date', $date);
-    }
-
     // 更新行事曆內容
     public function updateCalendarByDate(string $date, int $holiday, string $comment)
     {
