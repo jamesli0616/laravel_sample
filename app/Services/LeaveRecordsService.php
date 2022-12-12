@@ -68,7 +68,7 @@ class LeaveRecordsService
         if ( $params['end_hour'] == 13 ) {
             $period -= 0.5;
         }
-        $holidays = $this->LeaveRecordsRepository->getHloidaysInCalendar(
+        $holidays = $this->LeaveRecordsRepository->getHolidaysInCalendar(
             $params['start_date'],
             $params['end_date']
         )->get()->count();

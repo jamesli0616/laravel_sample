@@ -67,10 +67,9 @@ class LeaveRecordsRepository
     }
 
     // 取得calendar內假日天數
-    public function getHloidaysInCalendar(string $start_date, string $end_date)
+    public function getHolidaysInCalendar(string $start_date, string $end_date)
     {
-        return DB::table('calendar')->select('*')->whereBetween('date', [$start_date, $end_date])
-            ->where('holiday', 2);
+        return DB::table('calendar')->select('*')->whereBetween('date', [$start_date, $end_date])->where('holiday', 2);
     }
 
     // 判斷請假日期是否重疊
