@@ -4,7 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 use BenSampo\Enum\Rules\EnumValue;
-use App\Enums\LeaveRecordEnum;
+use App\Enums\LeaveStatusEnum;
 
 class ValidLeaveRecordRequest extends FormRequest
 {
@@ -26,9 +26,8 @@ class ValidLeaveRecordRequest extends FormRequest
     public function rules()
     {
         return [
-            'user_id' => 'required',
-            'leave_date' => 'required',
-            'valid_status' => ['required', new EnumValue(LeaveRecordEnum::class, false)],
+            'leave_id' => 'required',
+            'valid_status' => ['required', new EnumValue(LeaveStatusEnum::class, false)],
         ];
     }
 }

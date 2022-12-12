@@ -44,14 +44,10 @@ class CalendarController extends Controller
 
     public function update(UpdateCalendarRequest $request)
     {
-        $validated = $request->validated();
+        $params = $request->validated();
         
-        $this->CalendarService->updateCalendarByDate(
-            $validated['edit_date'],
-            $validated['holiday'],
-            $validated['comment'] == null?'':$validated['comment']
-        );
+        $response = $this->CalendarService->updateCalendarByDate($params);
 
-        return redirect()->route('showCalendar', ['year' => date_parse($validated['edit_date'])['year']]);
+        return redirect()->route('showCalendar', ['year' => DATE('Y')]);
     }
 }

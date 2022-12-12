@@ -4,8 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 use BenSampo\Enum\Rules\EnumValue;
-use App\Enums\LeaveRecordEnum;
-use App\Rules\LeaveDateCreateRule;
+use App\Enums\LeaveTypesEnum;
 
 class LeaveRecordCreateRequest extends FormRequest
 {
@@ -28,25 +27,21 @@ class LeaveRecordCreateRequest extends FormRequest
     {
         return [
             'user_id' => 'required',
-            'leave_date' => [new LeaveDateCreateRule],
-            'leave_type' => ['required', new EnumValue(LeaveRecordEnum::class, false)],
-            'leave_comment' => 'required',
-            'leave_start' => 'required',
-            'leave_period' => ['required',
-                function($attribute, $value, $fail) {
-                    $start_hr = $this['leave_start'];
-                    if ($start_hr + $value > 18) {
-                        return $fail('請假時間不符規定');
-                    }
-                }
-            ]
+            'type' => ['required', new EnumValue(LeaveTypesEnum::class, false)],
+            'start_date' => 'required',
+            'start_hour' => 'required',
+            'end_date' => 'required',
+            'end_hour' => 'required',
+            'comment' => 'required',
         ];
     }
 
     public function messages()
     {
         return [
-            'leave_comment' => '請假事由不得空白'
+            'comment' => '請假事由空白',
+            'start_date' => '未設定起始日期',
+            'end_date' => '未設定結束日期',
         ];
     }
 }

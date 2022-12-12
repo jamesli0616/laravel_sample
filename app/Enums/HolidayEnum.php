@@ -6,7 +6,7 @@ use BenSampo\Enum\Enum;
 
 final class HolidayEnum extends Enum
 {
-    const WorkingDay = 0;
-    const NotDefine = 1;
-    const Holiday = 2;
+    const WORKING = 0;
+    const UNDEFINE = 1;
+    const HOLIDAY = 2;
 }

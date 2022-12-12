@@ -31,19 +31,26 @@
                 建立假單
             </a>
             <div class="card">
+                @isset($response)
+                    <span style="color:red;">
+                        <strong>{{ $response }}</strong><br>
+                    </span>
+                @endisset
                 User: {{ Auth::user()->name }}
                 Year: {{ $leaveRecordYear }}
                 <table>
                     <tr>
-                        <th>日期</th><th>假別</th><th>事由</th><th>時間</th><th>時長</th><th>狀態</th>
+                        <th>起始日</th><th>起始時間</th><th>結束日</th><th>結束時間</th><th>假別</th><th>事由</th><th>時長</th><th>狀態</th>
                     </tr>
                     @foreach ($leaveCalendar as $rows)
                         <tr>
-                            <td>{{ date('m-d', strtotime($rows['leave_date'])) }}</td>
-                            <td>{{ $LeaveRecordsPresenter->leaveType($rows['leave_type']) }}</td>
-                            <td>{{ $rows['leave_comment'] }}</td>
-                            <td>{{ $rows['leave_start'] }}:00</td>
-                            <td>{{ $rows['leave_period'] }}小時</td>
+                            <td>{{ date('m-d', strtotime($rows['start_date'])) }}</td>
+                            <td>{{ $rows['start_hour'] }}:00</td>
+                            <td>{{ date('m-d', strtotime($rows['end_date'])) }}</td>
+                            <td>{{ $rows['end_hour'] }}:00</td>
+                            <td>{{ $LeaveRecordsPresenter->leaveType($rows['type']) }}</td>
+                            <td>{{ $rows['comment'] }}</td>
+                            <td>{{ $rows['period'] }}小時</td>
                             <td>{{ $LeaveRecordsPresenter->leaveStatus($rows['valid_status']) }}</td>
                         </tr>
                     @endforeach

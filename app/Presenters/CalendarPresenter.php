@@ -9,11 +9,11 @@ class CalendarPresenter
     public function holiday($holiday)
     {
         switch($holiday) {
-        case HolidayEnum::WorkingDay:
+        case HolidayEnum::WORKING:
             return '工作日';
-        case HolidayEnum::NotDefine:
+        case HolidayEnum::UNDEFINE:
             return '未定義';
-        case HolidayEnum::Holiday:
+        case HolidayEnum::HOLIDAY:
             return '例假日';
         }
     }

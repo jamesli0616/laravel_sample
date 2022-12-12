@@ -50,30 +50,24 @@ class LeaveRecordsController extends Controller
 
     public function create(LeaveRecordCreateRequest $request)
     {
-        $validated = $request->validated();
+        $params = $request->validated();
         
-        $this->LeaveRecordsService->createLeaveRecords(
-            $validated['user_id'],
-            $validated['leave_date'],
-            $validated['leave_type'],
-            $validated['leave_comment'],
-            $validated['leave_start'],
-            $validated['leave_period']
-        );
+        $response = $this->LeaveRecordsService->createLeaveRecords($params);
 
-        return redirect()->route('showLeaveCalendar', ['year' => date_parse($validated['leave_date'])['year']]);
+        if($response['status'] == -1)
+        {
+            return back()->withErrors(['message' => $response['message']]);
+        }
+
+        return redirect()->route('showLeaveCalendar', ['year' => DATE('Y')]);
     }
 
     public function validLeaveRecord(ValidLeaveRecordRequest $request)
     {
-        $validated = $request->validated();
+        $params = $request->validated();
  
-        $this->LeaveRecordsService->updateLeaveRecordsStatus(
-            $validated['user_id'],
-            $validated['leave_date'],
-            $validated['valid_status']
-        );
+        $response = $this->LeaveRecordsService->updateLeaveRecordsStatus($params);
 
-        return redirect()->route('showLeaveCalendarAdmin', ['year' => date_parse($validated['leave_date'])['year']]);
+        return redirect()->route('showLeaveCalendarAdmin', ['year' => DATE('Y')]);
     }
 }

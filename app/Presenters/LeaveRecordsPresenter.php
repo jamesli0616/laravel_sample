@@ -2,20 +2,21 @@
 
 namespace App\Presenters;
 
-use App\Enums\LeaveRecordEnum;
+use App\Enums\LeaveStatusEnum;
+use App\Enums\LeaveTypesEnum;
 
 class LeaveRecordsPresenter
 {
     public function leaveType($leaveType)
     {
         switch($leaveType) {
-        case LeaveRecordEnum::Type_SimpleLeave:
+        case LeaveTypesEnum::SIMPLE:
             return '事假';
-        case LeaveRecordEnum::Type_CompanyLeave:
+        case LeaveTypesEnum::COMPANY:
             return '公假';
-        case LeaveRecordEnum::Type_SpecialLeave:
+        case LeaveTypesEnum::SPECIAL:
             return '特休';
-        case LeaveRecordEnum::Type_SickLeave:
+        case LeaveTypesEnum::SICK:
             return '病假';
         }
     }
@@ -23,11 +24,11 @@ class LeaveRecordsPresenter
     public function leaveStatus($leaveStatus)
     {
         switch($leaveStatus) {
-        case LeaveRecordEnum::Status_Apply:
+        case LeaveStatusEnum::APPLY:
             return '申請中';
-        case LeaveRecordEnum::Status_Allow:
+        case LeaveStatusEnum::ALLOW:
             return '許可';
-        case LeaveRecordEnum::Status_Denied:
+        case LeaveStatusEnum::DENIED:
             return '拒絕';
         }
     }

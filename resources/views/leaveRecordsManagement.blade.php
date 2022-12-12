@@ -27,15 +27,14 @@
                     {{ $rows['years'] }}
                 </a>/
             @endforeach
-            <div id="validLeaveRecord_form" style="z-index: 1;position: fixed;margin-left:500px;border:solid;padding:3px;">
+            <div id="validLeaveRecord_form" style="z-index: 1;position: fixed;margin-left:640px;border:solid;padding:3px;">
                 <form action="{{ route('validLeaveRecordAdmin') }}" method="post">
                     @csrf
-                    {{ Form::hidden('user_id', null, ['readonly']) }}
+                    單號：{{ Form::text('leave_id', null, ['readonly']) }}
+                    <br>
                     User：{{ Form::text('user_name', null, ['readonly']) }}
                     <br>
-                    日期：{{ Form::text('leave_date', null, ['readonly']) }}
-                    <br>
-                    假日：{{ Form::select('valid_status', array(
+                    狀態：{{ Form::select('valid_status', array(
                         '0' => $LeaveRecordsPresenter->leaveStatus(0),
                         '1' => $LeaveRecordsPresenter->leaveStatus(1),
                         '2' => $LeaveRecordsPresenter->leaveStatus(2)),
@@ -56,16 +55,18 @@
                 Year: {{ $leaveRecordYear }}
                 <table>
                     <tr>
-                        <th>User</th><th>日期</th><th>假別</th><th>事由</th><th>時間</th><th>時長</th><th>狀態</th>
+                        <th>User</th><th>起始日</th><th>起始時間</th><th>結束日</th><th>結束時間</th><th>假別</th><th>事由</th><th>時長</th><th>狀態</th>
                     </tr>
                     @foreach ($leaveCalendar as $rows)
-                        <tr id="{{$rows['leave_date']}}" onclick="loadValidLeaveRecord(this);">
-                            <td user_id="{{ $rows['user_id'] }}">{{ $rows['name'] }}</td>
-                            <td>{{ date('m-d', strtotime($rows['leave_date'])) }}</td>
-                            <td>{{ $LeaveRecordsPresenter->leaveType($rows['leave_type']) }}</td>
-                            <td>{{ $rows['leave_comment'] }}</td>
-                            <td>{{ $rows['leave_start'] }}:00</td>
-                            <td>{{ $rows['leave_period'] }}小時</td>
+                        <tr id="{{$rows['lid']}}" onclick="loadValidLeaveRecord(this);">
+                            <td>{{ $rows['name'] }}</td>
+                            <td>{{ date('m-d', strtotime($rows['start_date'])) }}</td>
+                            <td>{{ $rows['start_hour'] }}:00</td>
+                            <td>{{ date('m-d', strtotime($rows['end_date'])) }}</td>
+                            <td>{{ $rows['end_hour'] }}:00</td>
+                            <td>{{ $LeaveRecordsPresenter->leaveType($rows['type']) }}</td>
+                            <td>{{ $rows['comment'] }}</td>
+                            <td>{{ $rows['period'] }}小時</td>
                             <td>{{ $LeaveRecordsPresenter->leaveStatus($rows['valid_status']) }}</td>
                         </tr>
                     @endforeach
@@ -78,11 +79,9 @@
 <script>
     function loadValidLeaveRecord(element)
     {
-        let setId = $(element).find('td').eq(0).attr('user_id');
+        let setId = $(element).attr('id');
         let setName = $(element).find('td').eq(0).text();
-        let setDate = $(element).attr('id');
-        $('input[name=\'user_id\']').val(setId);
+        $('input[name=\'leave_id\']').val(setId);
         $('input[name=\'user_name\']').val(setName);
-        $('input[name=\'leave_date\']').val(setDate);
     }
 </script>

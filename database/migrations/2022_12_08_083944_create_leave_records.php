@@ -14,12 +14,15 @@ return new class extends Migration
     public function up()
     {
         Schema::create('leave_records', function (Blueprint $table) {
+            $table->increments('lid');
             $table->bigInteger('user_id');
-            $table->string('leave_date');
-            $table->tinyinteger('leave_type');
-            $table->string('leave_comment');
-            $table->tinyinteger('leave_start');
-            $table->tinyinteger('leave_period');
+            $table->tinyinteger('type');
+            $table->string('comment');
+            $table->string('start_date');
+            $table->string('end_date');
+            $table->tinyinteger('start_hour');
+            $table->tinyinteger('end_hour');
+            $table->float('period');
             $table->tinyinteger('valid_status');
             $table->timestamps();
         });

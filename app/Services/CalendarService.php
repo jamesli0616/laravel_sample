@@ -23,8 +23,21 @@ class CalendarService
         ];
     }
     
-    public function updateCalendarByDate(string $date, int $holiday, string $comment)
+    public function updateCalendarByDate(mixed $params)
     {
-        $this->CalendarRepository->updateCalendarByDate($date, $holiday, $comment);
+        if ( $params['comment'] == null ) {
+            $params['comment'] = '';
+        }
+
+        $this->CalendarRepository->updateCalendarByDate(
+            $params['edit_date'],
+            $params['holiday'],
+            $params['comment']
+        );
+
+        return [
+            'status' => 0,
+            'message' => '更新行事曆完成'
+        ];
     }
 }
