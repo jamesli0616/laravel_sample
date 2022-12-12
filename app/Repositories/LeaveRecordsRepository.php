@@ -70,6 +70,22 @@ class LeaveRecordsRepository
     public function getHloidaysInCalendar(string $start_date, string $end_date)
     {
         return DB::table('calendar')->select('*')->whereBetween('date', [$start_date, $end_date])
-            ->where('holiday', 2)->get()->count();
+            ->where('holiday', 2);
+    }
+
+    // 判斷請假日期是否重疊
+    public function getLeaveRecordConflict(string $start_date, string $end_date, int $uid)
+    {
+        return $this->model->where(function ($query) use ($start_date, $end_date) {
+            $query->whereBetween('start_date', [$start_date, $end_date]);
+        })->orWhere(function ($query) use ($start_date, $end_date) {
+            $query->where('start_date', '<', $start_date);
+            $query->where('end_date', '>', $end_date);
+        })->orWhere(function ($query) use ($start_date, $end_date) {
+            $query->whereBetween('end_date', [$start_date, $end_date]);
+        })->orWhere(function ($query) use ($start_date, $end_date) {
+            $query->where('start_date', '>', $start_date);
+            $query->where('end_date', '<', $end_date);
+        })->where('user_id', $uid);
     }
 }
