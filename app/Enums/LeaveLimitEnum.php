@@ -6,7 +6,7 @@ use BenSampo\Enum\Enum;
 
 final class LeaveLimitEnum extends Enum
 {
-    const SIMPLE = 2;
+    const SIMPLE = 4;
     const COMPANY = 9;
     const SPECIAL = 5;
     const SICK = 3;
