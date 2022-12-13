@@ -18,7 +18,6 @@ return new class extends Migration
             $table->string('weekdays');
             $table->tinyinteger('holiday');
             $table->string('comment')->nullable();
-            $table->timestamps();
         });
     }
 

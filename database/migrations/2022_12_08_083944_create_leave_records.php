@@ -24,7 +24,6 @@ return new class extends Migration
             $table->tinyinteger('end_hour');
             $table->float('period');
             $table->tinyinteger('valid_status');
-            $table->timestamps();
         });
     }
 

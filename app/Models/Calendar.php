@@ -10,7 +10,8 @@ class Calendar extends Model
     use HasFactory;
     
     protected $table = 'calendar';
-
+    public $timestamps = false;
+    
     protected $fillable = [
         'date',
         'weekdays',

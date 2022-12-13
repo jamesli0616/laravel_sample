@@ -60,7 +60,7 @@ class LeaveRecordsService
                 'message' => '請假日期與其他假單重疊'
             ];
         }
-        // 請假扣除假日判斷
+        // 請假計算天數
         $period = ( $end_date - $start_date ) / 86400 + 1;
         if ( $params['start_hour'] == 14 ) {
             $period -= 0.5;
@@ -68,6 +68,7 @@ class LeaveRecordsService
         if ( $params['end_hour'] == 13 ) {
             $period -= 0.5;
         }
+        // 請假扣除假日判斷
         $holidays = $this->LeaveRecordsRepository->getHolidaysInCalendar(
             $params['start_date'],
             $params['end_date']

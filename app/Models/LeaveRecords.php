@@ -10,6 +10,7 @@ class LeaveRecords extends Model
     use HasFactory;
         
     protected $table = 'leave_records';
+    public $timestamps = false;
     
     protected $fillable = [
         'user_id',
