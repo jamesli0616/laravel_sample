@@ -28,6 +28,12 @@ class CalendarRepository
         return $this->model->select(DB::raw('YEAR(date) as years'))->distinct(DB::raw('YEAR(date)'));
     }
 
+    // 取得calendar內假日天數
+    public function getHolidaysInCalendar(string $start_date, string $end_date)
+    {
+        return $this->model->select('*')->whereBetween('date', [$start_date, $end_date])->where('holiday', 2);
+    }
+
     // 更新行事曆內容
     public function updateCalendarByDate(string $date, int $holiday, string $comment)
     {

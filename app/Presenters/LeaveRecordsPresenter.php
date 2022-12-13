@@ -30,6 +30,8 @@ class LeaveRecordsPresenter
             return '許可';
         case LeaveStatusEnum::DENIED:
             return '拒絕';
+        case LeaveStatusEnum::CANCELED:
+            return '取消';
         }
     }
 }

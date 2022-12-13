@@ -3,18 +3,22 @@
 namespace App\Services;
 
 use App\Repositories\LeaveRecordsRepository;
+use App\Repositories\CalendarRepository;
 use App\Enums\LeaveLimitEnum;
 use App\Enums\LeaveTypesEnum;
 
 class LeaveRecordsService
 {
     protected $LeaveRecordsRepository;
+    protected $CalendarRepository;
 
     public function __construct(
-        LeaveRecordsRepository $LeaveRecordsRepository
+        LeaveRecordsRepository $LeaveRecordsRepository,
+        CalendarRepository $CalendarRepository
     )
 	{
         $this->LeaveRecordsRepository = $LeaveRecordsRepository;
+        $this->CalendarRepository = $CalendarRepository;
 	}
 
     public function getLeaveRecordsByYear(int $year)
@@ -69,7 +73,7 @@ class LeaveRecordsService
             $period -= 0.5;
         }
         // 請假扣除假日判斷
-        $holidays = $this->LeaveRecordsRepository->getHolidaysInCalendar(
+        $holidays = $this->CalendarRepository->getHolidaysInCalendar(
             $params['start_date'],
             $params['end_date']
         )->get()->count();

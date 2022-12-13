@@ -66,12 +66,6 @@ class LeaveRecordsRepository
         ]);
     }
 
-    // 取得calendar內假日天數
-    public function getHolidaysInCalendar(string $start_date, string $end_date)
-    {
-        return DB::table('calendar')->select('*')->whereBetween('date', [$start_date, $end_date])->where('holiday', 2);
-    }
-
     // 判斷請假日期是否重疊
     public function getLeaveRecordConflict(string $start_date, string $end_date, int $start_hour, int $end_hour, int $uid)
     {

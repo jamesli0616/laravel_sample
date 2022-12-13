@@ -9,4 +9,5 @@ final class LeaveStatusEnum extends Enum
     const APPLY = 0;
     const ALLOW = 1;
     const DENIED = 2;
+    const CANCELED = 3;
 }
