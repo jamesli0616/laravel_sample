@@ -17,7 +17,6 @@ class LeaveRecordsController extends Controller
     )
 	{
         $this->LeaveRecordsService = $LeaveRecordsService;
-		$this->middleware('auth');
 	}
 
     public function adminIndex(LeaveRecordsCalendarRequest $request)
@@ -66,7 +65,7 @@ class LeaveRecordsController extends Controller
     {
         $params = $request->validated();
  
-        $response = $this->LeaveRecordsService->updateLeaveRecordsStatus($params);
+        $response = $this->LeaveRecordsService->updateLeaveRecord($params);
 
         return redirect()->route('showLeaveCalendarAdmin', ['year' => DATE('Y')]);
     }

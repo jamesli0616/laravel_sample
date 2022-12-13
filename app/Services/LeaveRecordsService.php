@@ -72,6 +72,15 @@ class LeaveRecordsService
         if ( $params['end_hour'] == 13 ) {
             $period -= 0.5;
         }
+        // 請假起始或結束日期為假日
+        $isHolidayStartDate = $this->CalendarRepository->getIsHolidayByDate($params['start_date'])->get()[0]['holiday'];
+        $isHolidayEndDate = $this->CalendarRepository->getIsHolidayByDate($params['end_date'])->get()[0]['holiday'];
+        if( $isHolidayStartDate == 2 ||  $isHolidayEndDate == 2 ) {
+            return [
+                'status' => -1,
+                'message' => '請假起始或結束日為假日'
+            ];
+        }
         // 請假扣除假日判斷
         $holidays = $this->CalendarRepository->getHolidaysInCalendar(
             $params['start_date'],
@@ -106,17 +115,9 @@ class LeaveRecordsService
                 'message' => '請假超過時數上限'
             ];
         }
+        $params['period'] = $period * 8;
 
-        $this->LeaveRecordsRepository->createLeaveRecords(
-            $params['user_id'],
-            $params['type'],
-            $params['comment'],
-            $params['start_date'],
-            $params['end_date'],
-            $params['start_hour'],
-            $params['end_hour'],
-            $period * 8
-        );
+        $this->LeaveRecordsRepository->createLeaveRecords($params);
 
         return [
             'status' => 0,
@@ -124,9 +125,9 @@ class LeaveRecordsService
         ];
     }
 
-    public function updateLeaveRecordsStatus(mixed $params)
+    public function updateLeaveRecord(mixed $params)
     {
-        $this->LeaveRecordsRepository->updateLeaveRecordsStatus($params['leave_id'], $params['valid_status']);
+        $this->LeaveRecordsRepository->updateLeaveRecord($params['leave_id'], $params['valid_status']);
 
         return [
             'status' => 0,

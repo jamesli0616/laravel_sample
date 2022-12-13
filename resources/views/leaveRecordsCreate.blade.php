@@ -6,13 +6,14 @@
     <form action="{{ route('createLeaveRecord') }}" method="post">
         @csrf
         {{ Form::hidden('user_id', Auth::user()->id) }}
+        {{ Form::hidden('period', 0, ['readonly']) }}
         User：{{ Form::text('user_name', Auth::user()->name, ['readonly']) }}<br>
-        起始日：{{ Form::date('start_date') }}<br>
+        起始日：{{ Form::date('start_date', DATE('Y-m-d')) }}<br>
         起始時間：{{ Form::select('start_hour', 
             ['9' => '9', '14' => '14'],
             9
         ) }}<br>
-        結束日：{{ Form::date('end_date') }}<br>
+        結束日：{{ Form::date('end_date', DATE('Y-m-d')) }}<br>
         結束時間：{{ Form::select('end_hour', 
             ['13' => '13', '18' => '18'],
             18

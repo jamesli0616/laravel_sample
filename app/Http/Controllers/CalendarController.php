@@ -18,7 +18,6 @@ class CalendarController extends Controller
     )
 	{
         $this->CalendarService = $CalendarService;
-        $this->middleware('auth');
 	}
 
     public function showUpload()

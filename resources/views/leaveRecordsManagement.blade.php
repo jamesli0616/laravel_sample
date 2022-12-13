@@ -13,6 +13,9 @@
         .empty {
             background-color:grey;
         }
+        #validLeaveRecord_form {
+            background-color:white;
+        }
     </style>
 </head>
 <div class="container">
@@ -27,12 +30,20 @@
                     {{ $rows['years'] }}
                 </a>/
             @endforeach
-            <div id="validLeaveRecord_form" style="z-index: 1;position: fixed;margin-left:640px;border:solid;padding:3px;">
+            <div id="validLeaveRecord_form" style="z-index: 1;position: fixed;margin-left:400px;border:solid;padding:3px;display:none;">
                 <form action="{{ route('validLeaveRecordAdmin') }}" method="post">
                     @csrf
                     單號：{{ Form::text('leave_id', null, ['readonly']) }}
                     <br>
                     User：{{ Form::text('user_name', null, ['readonly']) }}
+                    <br>
+                    起使時間：{{ Form::text('start_date', null, ['readonly']) }}
+                    <br>
+                    結束時間：{{ Form::text('end_date', null, ['readonly']) }}
+                    <br>
+                    假別：{{ Form::text('leave_type', null, ['readonly']) }}
+                    <br>
+                    時數：{{ Form::text('period', null, ['readonly']) }}
                     <br>
                     狀態：{{ Form::select('valid_status', array(
                         '0' => $LeaveRecordsPresenter->leaveStatus(0),
@@ -43,6 +54,9 @@
                     <br>
                     <button>
                         <span>送出</span>
+                    </button>
+                    <button type="button" onclick="$('#validLeaveRecord_form').hide();">
+                        <span>取消</span>
                     </button>
                 </form>
                 @foreach ($errors->all() as $error)
@@ -81,7 +95,16 @@
     {
         let setId = $(element).attr('id');
         let setName = $(element).find('td').eq(0).text();
+        let setStartTime = $(element).find('td').eq(1).text()+' '+$(element).find('td').eq(2).text();
+        let setEndTime = $(element).find('td').eq(3).text()+' '+$(element).find('td').eq(4).text();
+        let setType = $(element).find('td').eq(5).text();
+        let setPeriod = $(element).find('td').eq(7).text();
         $('input[name=\'leave_id\']').val(setId);
         $('input[name=\'user_name\']').val(setName);
+        $('input[name=\'start_date\']').val(setStartTime);
+        $('input[name=\'end_date\']').val(setEndTime);
+        $('input[name=\'leave_type\']').val(setType);
+        $('input[name=\'period\']').val(setPeriod);
+        $('#validLeaveRecord_form').show();
     }
 </script>
