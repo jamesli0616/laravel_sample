@@ -69,25 +69,31 @@ class LeaveRecordsRepository
     // 判斷請假日期是否重疊
     public function getLeaveRecordConflict(string $start_date, string $end_date, int $start_hour, int $end_hour, int $uid)
     {
-        return $this->model->where(function ($query) use ($start_date, $end_date) {
+        return $this->model->where(function ($query) use ($start_date, $end_date, $uid) {
             $query->where('start_date', '>', $start_date);
             $query->where('start_date', '<', $end_date);
-        })->orWhere(function ($query) use ($start_date, $end_date) {
+            $query->where('user_id', $uid);
+        })->orWhere(function ($query) use ($start_date, $end_date, $uid) {
             $query->where('end_date', '>', $start_date);
             $query->where('end_date', '<', $end_date);
-        })->orWhere(function ($query) use ($start_date, $end_date) {
+            $query->where('user_id', $uid);
+        })->orWhere(function ($query) use ($start_date, $end_date, $uid) {
             $query->where('start_date', '<=', $start_date);
             $query->where('end_date', '>=', $end_date);
-        })->orWhere(function ($query) use ($start_date, $end_date) {
+            $query->where('user_id', $uid);
+        })->orWhere(function ($query) use ($start_date, $end_date, $uid) {
             $query->where('start_date', '>', $start_date);
             $query->where('end_date', '<', $end_date);
+            $query->where('user_id', $uid);
         // 同一日上下半天請假重疊情況
-        })->orWhere(function ($query) use ($end_date, $end_hour) {
+        })->orWhere(function ($query) use ($end_date, $end_hour, $uid) {
             $query->where('start_date', $end_date);
             $query->where('start_hour', '<', $end_hour);
-        })->orWhere(function ($query) use ($start_date, $start_hour) {
+            $query->where('user_id', $uid);
+        })->orWhere(function ($query) use ($start_date, $start_hour, $uid) {
             $query->where('end_date', $start_date);
             $query->where('end_hour', '>', $start_hour);
-        })->where('user_id', $uid);
+            $query->where('user_id', $uid);
+        });
     }
 }
