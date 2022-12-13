@@ -18,8 +18,8 @@ return new class extends Migration
             $table->bigInteger('user_id');
             $table->tinyinteger('type');
             $table->string('comment');
-            $table->string('start_date');
-            $table->string('end_date');
+            $table->date('start_date');
+            $table->date('end_date');
             $table->tinyinteger('start_hour');
             $table->tinyinteger('end_hour');
             $table->float('period');

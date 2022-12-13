@@ -25,7 +25,7 @@ class LeaveRecordsService
     {
         return [
             'leaveCalendar' => $this->LeaveRecordsRepository->getLeaveRecordsByYear($year)->get(),
-            'leaveCalendarYears' => $this->LeaveRecordsRepository->getLeaveRecordsYears()->get(),
+            'leaveCalendarYears' => $this->LeaveRecordsRepository->getLeaveRecords()->get(),
             'leaveRecordYear' => $year
         ];
     }
@@ -65,7 +65,11 @@ class LeaveRecordsService
             ];
         }
         // 請假計算天數
-        $period = ( $end_date - $start_date ) / 86400 + 1;
+        $leave_record_date = $this->CalendarRepository->getCalendarDateRange(
+            $params['start_date'],
+            $params['end_date']
+        )->get();
+        $period = $leave_record_date->count();
         if ( $params['start_hour'] == 14 ) {
             $period -= 0.5;
         }
@@ -73,20 +77,18 @@ class LeaveRecordsService
             $period -= 0.5;
         }
         // 請假起始或結束日期為假日
-        $isHolidayStartDate = $this->CalendarRepository->getIsHolidayByDate($params['start_date'])->get()[0]['holiday'];
-        $isHolidayEndDate = $this->CalendarRepository->getIsHolidayByDate($params['end_date'])->get()[0]['holiday'];
-        if( $isHolidayStartDate == 2 ||  $isHolidayEndDate == 2 ) {
+        if( $leave_record_date[0]['holiday'] == 2 || $leave_record_date[$period-1]['holiday'] == 2 ) {
             return [
                 'status' => -1,
                 'message' => '請假起始或結束日為假日'
             ];
         }
         // 請假扣除假日判斷
-        $holidays = $this->CalendarRepository->getHolidaysInCalendar(
-            $params['start_date'],
-            $params['end_date']
-        )->get()->count();
-        $period -= $holidays;
+        foreach($leave_record_date as $rows) {
+            if( $rows['holiday'] == 2 ) {
+                $period--;
+            }
+        }
         if( $period <= 0 ) {
             return [
                 'status' => -1,
