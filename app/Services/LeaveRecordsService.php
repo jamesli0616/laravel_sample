@@ -6,6 +6,7 @@ use App\Repositories\LeaveRecordsRepository;
 use App\Repositories\CalendarRepository;
 use App\Enums\LeaveLimitEnum;
 use App\Enums\LeaveTypesEnum;
+use App\Enums\HolidayEnum;
 
 class LeaveRecordsService
 {
@@ -39,8 +40,8 @@ class LeaveRecordsService
             'leaveCalendar' => $this->LeaveRecordsRepository->getLeaveRecordsByDataRange(
                 $year.'-01-01',
                 $year.'-12-31'
-            )->get(),
-            'leaveCalendarYears' => $this->distinctYears($this->LeaveRecordsRepository->getLeaveRecordsByDataRange()->get()),
+            ),
+            'leaveCalendarYears' => $this->distinctYears($this->LeaveRecordsRepository->getLeaveRecordsByDataRange()),
             'leaveRecordYear' => $year
         ];
     }
@@ -52,8 +53,8 @@ class LeaveRecordsService
                 $uid,
                 $year.'-01-01',
                 $year.'-12-31'
-            )->get(),
-            'leaveCalendarYears' => $this->distinctYears($this->LeaveRecordsRepository->getLeaveRecordsByDataRangeAndUserID($uid)->get()),
+            ),
+            'leaveCalendarYears' => $this->distinctYears($this->LeaveRecordsRepository->getLeaveRecordsByDataRangeAndUserID($uid)),
             'leaveRecordYear' => $year
         ];
     }
@@ -70,8 +71,8 @@ class LeaveRecordsService
             ];
         }
         // 行事曆未建立請假日期
-        $start_date_exists = $this->CalendarRepository->getCalendarByDateRange($params['start_date'], $params['start_date'])->get()->count();
-        $end_date_exists = $this->CalendarRepository->getCalendarByDateRange($params['end_date'], $params['end_date'])->get()->count();
+        $start_date_exists = $this->CalendarRepository->getCalendarByDateRange($params['start_date'], $params['start_date'])->count();
+        $end_date_exists = $this->CalendarRepository->getCalendarByDateRange($params['end_date'], $params['end_date'])->count();
         if ( $start_date_exists == 0 || $end_date_exists == 0 ) {
             return [
                 'status' => -1,
@@ -85,7 +86,7 @@ class LeaveRecordsService
             $params['start_hour'],
             $params['end_hour'],
             $params['user_id']
-        )->get()->count();
+        )->count();
         if ( $isConflict != 0 ) {
             return [
                 'status' => -1,
@@ -96,16 +97,18 @@ class LeaveRecordsService
         $leave_record_date = $this->CalendarRepository->getCalendarByDateRange(
             $params['start_date'],
             $params['end_date']
-        )->get();
+        );
         $period = $leave_record_date->count();
+        // 起始日下午
         if ( $params['start_hour'] == 14 ) {
             $period -= 0.5;
         }
+        // 結束日上午
         if ( $params['end_hour'] == 13 ) {
             $period -= 0.5;
         }
         // 請假起始或結束日期為假日
-        if( $leave_record_date[0]['holiday'] == 2 || $leave_record_date[$period-1]['holiday'] == 2 ) {
+        if( $leave_record_date[0]['holiday'] == HolidayEnum::HOLIDAY || $leave_record_date[$period-1]['holiday'] == HolidayEnum::HOLIDAY ) {
             return [
                 'status' => -1,
                 'message' => '請假起始或結束日為假日'
@@ -113,7 +116,7 @@ class LeaveRecordsService
         }
         // 請假扣除假日判斷
         foreach($leave_record_date as $rows) {
-            if( $rows['holiday'] == 2 ) {
+            if( $rows['holiday'] == HolidayEnum::HOLIDAY ) {
                 $period--;
             }
         }

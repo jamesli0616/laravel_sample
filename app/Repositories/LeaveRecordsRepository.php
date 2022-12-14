@@ -22,7 +22,7 @@ class LeaveRecordsRepository
         return $this->model->join('users', 'user_id', '=', 'users.id')->whereBetween('start_date', [
             $start_date,
             $end_date
-        ]);
+        ])->get();
     }
 
     // 取得所有請假紀錄指定日期範圍 by user id
@@ -31,7 +31,7 @@ class LeaveRecordsRepository
         return $this->model->where('user_id', $user_id)->whereBetween('start_date', [
             $start_date,
             $end_date
-        ]);
+        ])->get();
     }
 
     // 建立請假紀錄
@@ -76,6 +76,6 @@ class LeaveRecordsRepository
             $query->where('end_date', $start_date);
             $query->where('end_hour', '>', $start_hour);
             $query->where('user_id', $user_id);
-        });
+        })->get();
     }
 }
