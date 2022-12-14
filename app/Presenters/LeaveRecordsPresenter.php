@@ -4,6 +4,7 @@ namespace App\Presenters;
 
 use App\Enums\LeaveStatusEnum;
 use App\Enums\LeaveTypesEnum;
+use App\Enums\LeaveTimeEnum;
 
 class LeaveRecordsPresenter
 {
@@ -32,6 +33,16 @@ class LeaveRecordsPresenter
             return '拒絕';
         case LeaveStatusEnum::CANCELED:
             return '取消';
+        }
+    }
+
+    public function leaveTime($leaveTime)
+    {
+        switch($leaveTime) {
+        case LeaveTimeEnum::MORNING:
+            return '上午';
+        case LeaveTimeEnum::AFTERNOON:
+            return '下午';
         }
     }
 }

@@ -6,6 +6,7 @@ use App\Repositories\LeaveRecordsRepository;
 use App\Repositories\CalendarRepository;
 use App\Enums\LeaveLimitEnum;
 use App\Enums\LeaveTypesEnum;
+use App\Enums\LeaveTimeEnum;
 use App\Enums\HolidayEnum;
 
 class LeaveRecordsService
@@ -100,11 +101,11 @@ class LeaveRecordsService
         );
         $period = $leave_record_date->count();
         // 起始日下午
-        if ( $params['start_hour'] == 14 ) {
+        if ( $params['start_hour'] == LeaveTimeEnum::AFTERNOON ) {
             $period -= 0.5;
         }
         // 結束日上午
-        if ( $params['end_hour'] == 13 ) {
+        if ( $params['end_hour'] == LeaveTimeEnum::MORNING ) {
             $period -= 0.5;
         }
         // 請假起始或結束日期為假日

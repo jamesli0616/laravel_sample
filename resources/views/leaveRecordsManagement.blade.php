@@ -75,9 +75,9 @@
                         <tr id="{{$rows['lid']}}" onclick="loadValidLeaveRecord(this);">
                             <td>{{ $rows['name'] }}</td>
                             <td>{{ date('m-d', strtotime($rows['start_date'])) }}</td>
-                            <td>{{ $rows['start_hour'] }}:00</td>
+                            <td>{{ $LeaveRecordsPresenter->leaveTime($rows['start_hour']) }}</td>
                             <td>{{ date('m-d', strtotime($rows['end_date'])) }}</td>
-                            <td>{{ $rows['end_hour'] }}:00</td>
+                            <td>{{ $LeaveRecordsPresenter->leaveTime($rows['end_hour']) }}</td>
                             <td>{{ $LeaveRecordsPresenter->leaveType($rows['type']) }}</td>
                             <td>{{ $rows['comment'] }}</td>
                             <td>{{ $rows['period'] }}小時</td>
