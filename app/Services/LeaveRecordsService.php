@@ -61,7 +61,7 @@ class LeaveRecordsService
         ];
     }
 
-    public function createLeaveRecords(mixed $params)
+    public function createLeaveRecords(array $params)
     {
         $start_date = strtotime($params['start_date']);
         $end_date = strtotime($params['end_date']);
