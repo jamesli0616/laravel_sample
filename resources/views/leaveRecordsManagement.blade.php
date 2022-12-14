@@ -26,11 +26,11 @@
             </a>
             <br>
             @foreach ($leaveCalendarYears as $rows)
-                <a href="{{ route('showLeaveCalendarAdmin', $rows['years']) }}">
-                    {{ $rows['years'] }}
+                <a href="{{ route('showLeaveCalendarAdmin', $rows) }}">
+                    {{ $rows }}
                 </a>/
             @endforeach
-            <div id="validLeaveRecord_form" style="z-index: 1;position: fixed;margin-left:400px;border:solid;padding:3px;display:none;">
+            <div id="validLeaveRecord_form" style="z-index: 1;position: fixed;margin-left:600px;border:solid;padding:3px;display:none;">
                 <form action="{{ route('validLeaveRecordAdmin') }}" method="post">
                     @csrf
                     單號：{{ Form::text('leave_id', null, ['readonly']) }}

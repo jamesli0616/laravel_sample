@@ -21,11 +21,23 @@ class LeaveRecordsService
         $this->CalendarRepository = $CalendarRepository;
 	}
 
+    // 整理請假紀錄所有年份
+    protected function distinctYears(mixed $record_results)
+    {
+        $years_array = [];
+        foreach($record_results as $rows) {
+            if (!in_array(date_parse($rows['start_date'])['year'], $years_array)) {
+                array_push($years_array, date_parse($rows['start_date'])['year']);
+            }
+        }
+        return $years_array;
+    }
+
     public function getLeaveRecordsByYear(int $year)
     {
         return [
             'leaveCalendar' => $this->LeaveRecordsRepository->getLeaveRecordsByYear($year)->get(),
-            'leaveCalendarYears' => $this->LeaveRecordsRepository->getLeaveRecords()->get(),
+            'leaveCalendarYears' => $this->distinctYears($this->LeaveRecordsRepository->getLeaveRecords()->get()),
             'leaveRecordYear' => $year
         ];
     }
@@ -33,8 +45,8 @@ class LeaveRecordsService
     public function getLeaveRecordsByUserID(int $uid, int $year)
     {
         return [
-            'leaveCalendar' => $this->LeaveRecordsRepository->getLeaveRecordsByUserID($uid, $year)->get(),
-            'leaveCalendarYears' => $this->LeaveRecordsRepository->getLeaveRecordsYearsByUserID($uid)->get(),
+            'leaveCalendar' => $this->LeaveRecordsRepository->getLeaveRecordsByYearAndUserID($uid, $year)->get(),
+            'leaveCalendarYears' => $this->distinctYears($this->LeaveRecordsRepository->getLeaveRecordsByUserID($uid)->get()),
             'leaveRecordYear' => $year
         ];
     }
@@ -65,7 +77,7 @@ class LeaveRecordsService
             ];
         }
         // 請假計算天數
-        $leave_record_date = $this->CalendarRepository->getCalendarDateRange(
+        $leave_record_date = $this->CalendarRepository->getCalendarByDateRange(
             $params['start_date'],
             $params['end_date']
         )->get();

@@ -16,6 +16,12 @@ class CalendarRepository
         $this->model = $Calendar;
     }
 
+    // 取得所有calendar
+    public function getCalendar()
+    {
+        return $this->model;
+    }
+
     // 取得行事曆 by 年份
     public function getCalendarByYear(int $year)
     {
@@ -25,14 +31,8 @@ class CalendarRepository
         ]);
     }
 
-    // 取得所有行事曆年份
-    public function getCalendarDistinctYears()
-    {
-        return $this->model->select(DB::raw('YEAR(date) as years'))->distinct(DB::raw('YEAR(date)'));
-    }
-
     // 取得calendar指定日期範圍
-    public function getCalendarDateRange(string $start_date, string $end_date)
+    public function getCalendarByDateRange(string $start_date, string $end_date)
     {
         return $this->model->whereBetween('date', [$start_date, $end_date]);
     }

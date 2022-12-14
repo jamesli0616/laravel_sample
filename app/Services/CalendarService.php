@@ -15,11 +15,23 @@ class CalendarService
         $this->CalendarRepository = $CalendarRepository;
 	}
 
+    // 整理Calendar所有年份
+    protected function distinctYears(mixed $record_results)
+    {
+        $years_array = [];
+        foreach($record_results as $rows) {
+            if (!in_array(date_parse($rows['date'])['year'], $years_array)) {
+                array_push($years_array, date_parse($rows['date'])['year']);
+            }
+        }
+        return $years_array;
+    }
+
     public function displayCalendarPage(int $year)
     {
         return [
             'calendarDate' => $this->CalendarRepository->getCalendarByYear($year)->get(),
-            'calendarYears' => $this->CalendarRepository->getCalendarDistinctYears()->get()
+            'calendarYears' => $this->distinctYears($this->CalendarRepository->getCalendar()->get())
         ];
     }
     
