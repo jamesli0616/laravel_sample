@@ -13,6 +13,16 @@
         .empty {
             background-color:grey;
         }
+        .date_back {
+            line-height: 10px;
+            display: block;
+            color: #bbb;
+        }
+        .date_front {
+            position: absolute;
+            width:48px;
+            margin-top: -24px;
+        }
     </style>
 </head>
 <div class="container">
@@ -81,7 +91,10 @@
                                 @endfor
                             @endif
                         @endif
-                        <td onclick="loadCalendarDate(this);" id="{{$rows['date']}}" holiday-type="{{$rows['holiday']}}">{{ $rows['comment'] }}</td>
+                        <td onclick="loadCalendarDate(this);" id="{{$rows['date']}}" holiday-type="{{$rows['holiday']}}">
+                            <span class="date_back">{{ date('d', strtotime($rows['date'])) }}</span>
+                            <div class="date_front">{{ $rows['comment'] }}</div>
+                        </td>
                         @if(date('w', strtotime($rows['date'])) == 6 )
                             </tr><tr>
                         @endif
@@ -98,7 +111,7 @@
     {
         let setDate = $(element).attr('id');
         let setHoliday = $(element).attr('holiday-type');
-        let setComment = $(element).text();
+        let setComment = $(element).find('div').text();
         $('input[name=\'edit_date\']').val(setDate);
         $('input[name=\'comment\']').val(setComment);
         $("select option").filter(function() {
