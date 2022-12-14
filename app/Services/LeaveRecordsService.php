@@ -27,13 +27,10 @@ class LeaveRecordsService
     // 整理請假紀錄所有年份
     protected function distinctYears(Collection $record_results)
     {
-        $years_array = [];
-        foreach($record_results as $rows) {
-            if (!in_array(date_parse($rows['start_date'])['year'], $years_array)) {
-                array_push($years_array, date_parse($rows['start_date'])['year']);
-            }
-        }
-        return $years_array;
+        $distinct_years = $record_results->transform( function($item, $key) {
+            return ['year' => date_parse($item['start_date'])['year']];
+        });
+        return $distinct_years->unique('year')->toArray();
     }
 
     public function getLeaveRecordsByYear(int $year)

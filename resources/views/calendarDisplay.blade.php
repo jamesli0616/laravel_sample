@@ -33,8 +33,8 @@
             </a>
             <br>
             @foreach ($calendarYears as $rows)
-                <a href="{{ route('showCalendar', $rows) }}">
-                    {{ $rows }}
+                <a href="{{ route('showCalendar', $rows['year']) }}">
+                    {{ $rows['year'] }}
                 </a>/
             @endforeach
             <a href="{{ route('showLeaveCalendar', DATE('Y')) }}">

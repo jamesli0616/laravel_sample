@@ -26,8 +26,8 @@
             </a>
             <br>
             @foreach ($leaveCalendarYears as $rows)
-                <a href="{{ route('showLeaveCalendarAdmin', $rows) }}">
-                    {{ $rows }}
+                <a href="{{ route('showLeaveCalendarAdmin', $rows['year']) }}">
+                    {{ $rows['year'] }}
                 </a>/
             @endforeach
             <div id="validLeaveRecord_form" style="z-index: 1;position: fixed;margin-left:600px;border:solid;padding:3px;display:none;">

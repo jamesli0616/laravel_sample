@@ -19,13 +19,10 @@ class CalendarService
     // 整理Calendar所有年份
     protected function distinctYears(Collection $record_results)
     {
-        $years_array = [];
-        foreach($record_results as $rows) {
-            if (!in_array(date_parse($rows['date'])['year'], $years_array)) {
-                array_push($years_array, date_parse($rows['date'])['year']);
-            }
-        }
-        return $years_array;
+        $distinct_years = $record_results->transform( function($item, $key) {
+            return ['year' => date_parse($item['date'])['year']];
+        });
+        return $distinct_years->unique('year')->toArray();
     }
 
     public function displayCalendarPage(int $year)
