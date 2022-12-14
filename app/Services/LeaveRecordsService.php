@@ -36,8 +36,11 @@ class LeaveRecordsService
     public function getLeaveRecordsByYear(int $year)
     {
         return [
-            'leaveCalendar' => $this->LeaveRecordsRepository->getLeaveRecordsByYear($year)->get(),
-            'leaveCalendarYears' => $this->distinctYears($this->LeaveRecordsRepository->getLeaveRecords()->get()),
+            'leaveCalendar' => $this->LeaveRecordsRepository->getLeaveRecordsByDataRange(
+                $year.'-01-01',
+                $year.'-12-31'
+            )->get(),
+            'leaveCalendarYears' => $this->distinctYears($this->LeaveRecordsRepository->getLeaveRecordsByDataRange()->get()),
             'leaveRecordYear' => $year
         ];
     }
@@ -45,8 +48,12 @@ class LeaveRecordsService
     public function getLeaveRecordsByUserID(int $uid, int $year)
     {
         return [
-            'leaveCalendar' => $this->LeaveRecordsRepository->getLeaveRecordsByYearAndUserID($uid, $year)->get(),
-            'leaveCalendarYears' => $this->distinctYears($this->LeaveRecordsRepository->getLeaveRecordsByUserID($uid)->get()),
+            'leaveCalendar' => $this->LeaveRecordsRepository->getLeaveRecordsByDataRangeAndUserID(
+                $uid,
+                $year.'-01-01',
+                $year.'-12-31'
+            )->get(),
+            'leaveCalendarYears' => $this->distinctYears($this->LeaveRecordsRepository->getLeaveRecordsByDataRangeAndUserID($uid)->get()),
             'leaveRecordYear' => $year
         ];
     }
@@ -60,6 +67,15 @@ class LeaveRecordsService
             return [
                 'status' => -1,
                 'message' => '起始時間大於結束時間'
+            ];
+        }
+        // 行事曆未建立請假日期
+        $start_date_exists = $this->CalendarRepository->getCalendarByDateRange($params['start_date'], $params['start_date'])->get()->count();
+        $end_date_exists = $this->CalendarRepository->getCalendarByDateRange($params['end_date'], $params['end_date'])->get()->count();
+        if ( $start_date_exists == 0 || $end_date_exists == 0 ) {
+            return [
+                'status' => -1,
+                'message' => '指定日期區間行事曆尚未建立'
             ];
         }
         // 請假時間重疊判斷

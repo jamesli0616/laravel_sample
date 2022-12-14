@@ -30,8 +30,11 @@ class CalendarService
     public function displayCalendarPage(int $year)
     {
         return [
-            'calendarDate' => $this->CalendarRepository->getCalendarByYear($year)->get(),
-            'calendarYears' => $this->distinctYears($this->CalendarRepository->getCalendar()->get())
+            'calendarDate' => $this->CalendarRepository->getCalendarByDateRange(
+                $year.'-01-01',
+                $year.'-12-31'
+            )->get(),
+            'calendarYears' => $this->distinctYears($this->CalendarRepository->getCalendarByDateRange()->get())
         ];
     }
     

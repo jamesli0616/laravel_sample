@@ -16,23 +16,8 @@ class CalendarRepository
         $this->model = $Calendar;
     }
 
-    // 取得所有calendar
-    public function getCalendar()
-    {
-        return $this->model;
-    }
-
-    // 取得行事曆 by 年份
-    public function getCalendarByYear(int $year)
-    {
-        return $this->model->whereBetween('date', [
-            $year.'-01-01',
-            $year.'-12-31'
-        ]);
-    }
-
-    // 取得calendar指定日期範圍
-    public function getCalendarByDateRange(string $start_date, string $end_date)
+    // 取得calendar指定日期範圍，預設為全撈
+    public function getCalendarByDateRange(string $start_date = '1970-01-01', string $end_date = '2038-01-19')
     {
         return $this->model->whereBetween('date', [$start_date, $end_date]);
     }

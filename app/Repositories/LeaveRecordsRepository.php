@@ -16,33 +16,21 @@ class LeaveRecordsRepository
         $this->model = $LeaveRecords;
     }
 
-    // 取得所有請假紀錄
-    public function getLeaveRecords()
-    {
-        return $this->model;
-    }
-
-    // 取得User所有請假紀錄
-    public function getLeaveRecordsByUserID(int $user_id)
-    {
-        return $this->model->where('user_id', $user_id);
-    }
-
-    // 取得所有請假紀錄 by 年份
-    public function getLeaveRecordsByYear(int $year)
+    // 取得所有請假紀錄指定日期範圍
+    public function getLeaveRecordsByDataRange(string $start_date = '1970-01-01', string $end_date = '2038-01-19')
     {
         return $this->model->join('users', 'user_id', '=', 'users.id')->whereBetween('start_date', [
-            $year.'-01-01',
-            $year.'-12-31'
+            $start_date,
+            $end_date
         ]);
     }
 
-    // 取得User請假紀錄 by 年份
-    public function getLeaveRecordsByYearAndUserID(int $user_id, int $year)
+    // 取得所有請假紀錄指定日期範圍 by user id
+    public function getLeaveRecordsByDataRangeAndUserID(int $user_id, string $start_date = '1970-01-01', string $end_date = '2038-01-19')
     {
         return $this->model->where('user_id', $user_id)->whereBetween('start_date', [
-            $year.'-01-01',
-            $year.'-12-31'
+            $start_date,
+            $end_date
         ]);
     }
 
