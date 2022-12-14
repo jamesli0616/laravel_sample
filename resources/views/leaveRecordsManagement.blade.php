@@ -37,7 +37,7 @@
                     <br>
                     User：{{ Form::text('user_name', null, ['readonly']) }}
                     <br>
-                    起使時間：{{ Form::text('start_date', null, ['readonly']) }}
+                    起始時間：{{ Form::text('start_date', null, ['readonly']) }}
                     <br>
                     結束時間：{{ Form::text('end_date', null, ['readonly']) }}
                     <br>

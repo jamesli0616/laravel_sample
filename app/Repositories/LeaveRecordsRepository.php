@@ -35,7 +35,7 @@ class LeaveRecordsRepository
     }
 
     // 建立請假紀錄
-    public function createLeaveRecords(mixed $params)
+    public function createLeaveRecords(array $params)
     {
         $this->model->insert($params);
     }

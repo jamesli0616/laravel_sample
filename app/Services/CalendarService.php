@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Repositories\CalendarRepository;
+use Illuminate\Database\Eloquent\Collection;
 
 class CalendarService
 {
@@ -16,7 +17,7 @@ class CalendarService
 	}
 
     // 整理Calendar所有年份
-    protected function distinctYears(mixed $record_results)
+    protected function distinctYears(Collection $record_results)
     {
         $years_array = [];
         foreach($record_results as $rows) {
@@ -38,7 +39,7 @@ class CalendarService
         ];
     }
     
-    public function updateCalendarByDate(mixed $params)
+    public function updateCalendarByDate(array $params)
     {
         if ( $params['comment'] == null ) {
             $params['comment'] = '';

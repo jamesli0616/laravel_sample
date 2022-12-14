@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use Illuminate\Database\Eloquent\Collection;
 use App\Repositories\LeaveRecordsRepository;
 use App\Repositories\CalendarRepository;
 use App\Enums\LeaveLimitEnum;
@@ -24,7 +25,7 @@ class LeaveRecordsService
 	}
 
     // 整理請假紀錄所有年份
-    protected function distinctYears(mixed $record_results)
+    protected function distinctYears(Collection $record_results)
     {
         $years_array = [];
         foreach($record_results as $rows) {
@@ -149,6 +150,7 @@ class LeaveRecordsService
                 'message' => '請假超過時數上限'
             ];
         }
+        // 工作天數*8轉為時數
         $params['period'] = $period * 8;
 
         $this->LeaveRecordsRepository->createLeaveRecords($params);
@@ -159,7 +161,7 @@ class LeaveRecordsService
         ];
     }
 
-    public function updateLeaveRecord(mixed $params)
+    public function updateLeaveRecord(array $params)
     {
         $this->LeaveRecordsRepository->updateLeaveRecord($params['leave_id'], $params['valid_status']);
 
