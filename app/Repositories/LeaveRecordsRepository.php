@@ -33,7 +33,7 @@ class LeaveRecordsRepository
     {
         return $this->model->join('users', 'user_id', '=', 'users.id')->whereBetween('start_date', [
             $year.'-01-01',
-            ($year+1).'-01-01'
+            $year.'-12-31'
         ]);
     }
 
@@ -42,7 +42,7 @@ class LeaveRecordsRepository
     {
         return $this->model->where('user_id', $user_id)->whereBetween('start_date', [
             $year.'-01-01',
-            ($year+1).'-01-01'
+            $year.'-12-31'
         ]);
     }
 

@@ -27,7 +27,7 @@ class CalendarRepository
     {
         return $this->model->whereBetween('date', [
             $year.'-01-01',
-            ($year+1).'-01-01'
+            $year.'-12-31'
         ]);
     }
 
