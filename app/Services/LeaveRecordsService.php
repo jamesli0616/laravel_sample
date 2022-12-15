@@ -69,7 +69,7 @@ class LeaveRecordsService
             $end_date
         );
 
-        return $leave_records->where('type', $leave_type)->sum('period');
+        return $leave_records->where('type', $leave_type)->sum('hours');
     }
 
     public function createLeaveRecords(array $params)
@@ -201,7 +201,7 @@ class LeaveRecordsService
             break;
         }
         // 休假天數轉為休假總時數
-        $params['period'] = $willLeaveDays * LeaveMinimumEnum::FULLDAY;
+        $params['hours'] = $willLeaveDays * LeaveMinimumEnum::FULLDAY;
 
         // 本次請假的起始結束日期
         $leave_start_date = date_parse($params['start_date']);
@@ -346,7 +346,7 @@ class LeaveRecordsService
                         $params['type']
                     );
                     // 當月超過一天
-                    if( $params['period'] + $leaved_month_hours > LeaveMinimumEnum::FULLDAY ) {
+                    if( $params['hours'] + $leaved_month_hours > LeaveMinimumEnum::FULLDAY ) {
                         return [
                             'status' => -1,
                             'message' => '超過生理假每月上限一日'
@@ -360,7 +360,7 @@ class LeaveRecordsService
                         $params['type']
                     );
                     // 包含此次生理假累計總時數
-                    $willLeavePeriodHours = $leaved_period_hours + $params['period'];
+                    $willLeavePeriodHours = $leaved_period_hours + $params['hours'];
                     // 三天以上開始要併入病假判斷
                     $combine_sick_hours =  $willLeavePeriodHours - LeaveMinimumEnum::FULLDAY * 3;
                     if( $combine_sick_hours > 0 ) {
@@ -393,7 +393,7 @@ class LeaveRecordsService
                         LeaveTypesEnum::FAMILYCARE
                     );
                     // 合併事假超過上限
-                    if( $leaved_simple_hours + $leaved_familycare_hours + $params['period'] > LeaveLimitEnum::SIMPLE * LeaveMinimumEnum::FULLDAY ) {
+                    if( $leaved_simple_hours + $leaved_familycare_hours + $params['hours'] > LeaveLimitEnum::SIMPLE * LeaveMinimumEnum::FULLDAY ) {
                         return [
                             'status' => -1,
                             'message' => '家庭照顧假合併事假時數超過上限'
@@ -401,7 +401,7 @@ class LeaveRecordsService
                     }
                 }
                 // 超過上限
-                if( $leaved_hours + $params['period'] > $leaveLimitDays * LeaveMinimumEnum::FULLDAY ) {
+                if( $leaved_hours + $params['hours'] > $leaveLimitDays * LeaveMinimumEnum::FULLDAY ) {
                     // 超過上限要標示的假別
                     if( $params['type'] == LeaveTypesEnum::TOCOLYSIS || $params['type'] == LeaveTypesEnum::SICK ) {
                         $params['warning'] = '已超過上限';

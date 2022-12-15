@@ -43,7 +43,7 @@
                     <br>
                     假別：{{ Form::text('leave_type', null, ['readonly']) }}
                     <br>
-                    時數：{{ Form::text('period', null, ['readonly']) }}
+                    時長：{{ Form::text('hours', null, ['readonly']) }}
                     <br>
                     狀態：{{ Form::select('valid_status', array(
                         '0' => $LeaveRecordsPresenter->leaveStatus(0),
@@ -84,7 +84,7 @@
                             <td>{{ $LeaveRecordsPresenter->leaveTime($rows['end_hour']) }}</td>
                             <td>{{ $LeaveRecordsPresenter->leaveType($rows['type']) }}</td>
                             <td>{{ $rows['comment'] }}</td>
-                            <td>{{ $LeaveRecordsPresenter->leaveDays($rows['period']) }}天</td>
+                            <td>{{ $LeaveRecordsPresenter->leaveDays($rows['hours']) }}天</td>
                             <td>{{ $LeaveRecordsPresenter->leaveStatus($rows['valid_status']) }}</td>
                         </tr>
                     @endforeach
@@ -102,13 +102,13 @@
         let setStartTime = $(element).find('td').eq(1).text()+' '+$(element).find('td').eq(2).text();
         let setEndTime = $(element).find('td').eq(3).text()+' '+$(element).find('td').eq(4).text();
         let setType = $(element).find('td').eq(5).text();
-        let setPeriod = $(element).find('td').eq(7).text();
+        let setHours = $(element).find('td').eq(7).text();
         $('input[name=\'leave_id\']').val(setId);
         $('input[name=\'user_name\']').val(setName);
         $('input[name=\'start_date\']').val(setStartTime);
         $('input[name=\'end_date\']').val(setEndTime);
         $('input[name=\'leave_type\']').val(setType);
-        $('input[name=\'period\']').val(setPeriod);
+        $('input[name=\'hours\']').val(setPeriod);
         $('#validLeaveRecord_form').show();
     }
 </script>

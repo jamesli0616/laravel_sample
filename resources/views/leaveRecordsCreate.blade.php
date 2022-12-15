@@ -6,7 +6,7 @@
     <form action="{{ route('createLeaveRecord') }}" method="post">
         @csrf
         {{ Form::hidden('user_id', Auth::user()->id) }}
-        {{ Form::hidden('period', 0, ['readonly']) }}
+        {{ Form::hidden('hours', 0, ['readonly']) }}
         {{ Form::hidden('warning', '', ['readonly']) }}
         User：{{ Form::text('user_name', Auth::user()->name, ['readonly']) }}<br>
         起始日：{{ Form::date('start_date', DATE('Y-m-d')) }}<br>
