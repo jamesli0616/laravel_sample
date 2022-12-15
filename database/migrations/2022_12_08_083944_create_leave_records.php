@@ -23,6 +23,7 @@ return new class extends Migration
             $table->tinyinteger('start_hour');
             $table->tinyinteger('end_hour');
             $table->float('period');
+            $table->string('warning')->nullable()->default('');
             $table->tinyinteger('valid_status')->default(0);
         });
     }

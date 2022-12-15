@@ -8,14 +8,17 @@ class LeaveRecords extends Model
 {
     protected $table = 'leave_records';
     public $timestamps = false;
-    
+
     protected $fillable = [
         'user_id',
-        'leave_date',
-        'leave_type',
-        'leave_comment',
-        'leave_start',
-        'leave_period',
-        'valid_status',
+        'type',
+        'comment',
+        'start_date',
+        'end_date',
+        'start_hour',
+        'end_hour',
+        'period',
+        'warning',
+        'valid_status'
     ];
 }

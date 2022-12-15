@@ -43,14 +43,18 @@
                         <th>起始日</th><th>起始時間</th><th>結束日</th><th>結束時間</th><th>假別</th><th>事由</th><th>時長</th><th>狀態</th>
                     </tr>
                     @foreach ($leaveCalendar as $rows)
-                        <tr>
+                        @if($rows['warning'] != '')
+                            <tr style="color:red">
+                        @else
+                            <tr>
+                        @endif
                             <td>{{ date('m-d', strtotime($rows['start_date'])) }}</td>
                             <td>{{ $LeaveRecordsPresenter->leaveTime($rows['start_hour']) }}</td>
                             <td>{{ date('m-d', strtotime($rows['end_date'])) }}</td>
                             <td>{{ $LeaveRecordsPresenter->leaveTime($rows['end_hour']) }}</td>
                             <td>{{ $LeaveRecordsPresenter->leaveType($rows['type']) }}</td>
                             <td>{{ $rows['comment'] }}</td>
-                            <td>{{ $rows['period'] }}小時</td>
+                            <td>{{ $LeaveRecordsPresenter->leaveDays($rows['period']) }}天</td>
                             <td>{{ $LeaveRecordsPresenter->leaveStatus($rows['valid_status']) }}</td>
                         </tr>
                     @endforeach
