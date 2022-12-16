@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Exceptions\CreateLeaveRecordExceptions;
 use Illuminate\Database\Eloquent\Collection;
 use App\Repositories\LeaveRecordsRepository;
 use App\Repositories\CalendarRepository;
@@ -113,19 +114,13 @@ class LeaveRecordsService
         $end_date = strtotime($params['end_date']);
         // 請假起始結束時間判斷
         if ( $start_date > $end_date ) {
-            return [
-                'status' => -1,
-                'message' => '起始時間大於結束時間'
-            ];
+            throw new CreateLeaveRecordExceptions('起始時間大於結束時間');
         }
         // 行事曆未建立請假日期 (因為行事曆通常為整年份建立，因此只檢查頭尾日期當作判斷[未考慮行事曆日期有跳日狀況])
         $start_date_exists = $this->CalendarRepository->getCalendarByDateRange($params['start_date'], $params['start_date']);
         $end_date_exists = $this->CalendarRepository->getCalendarByDateRange($params['end_date'], $params['end_date']);
         if ( $start_date_exists->isEmpty() || $end_date_exists->isEmpty() ) {
-            return [
-                'status' => -1,
-                'message' => '指定日期區間行事曆尚未建立'
-            ];
+            throw new CreateLeaveRecordExceptions('指定日期區間行事曆尚未建立');
         }
         // 請假時間重疊判斷
         $isConflict = $this->LeaveRecordsRepository->getLeaveRecordConflict(
@@ -136,10 +131,7 @@ class LeaveRecordsService
             $params['user_id']
         );
         if ( !$isConflict->isEmpty() ) {
-            return [
-                'status' => -1,
-                'message' => '請假日期與其他假單重疊'
-            ];
+            throw new CreateLeaveRecordExceptions('請假日期與其他假單重疊');
         }
         // 請假計算天數
         $leave_record_date = $this->CalendarRepository->getCalendarByDateRange(
@@ -148,12 +140,9 @@ class LeaveRecordsService
         );
         // 請假起始或結束日期碰到假日
         if( $leave_record_date->first()['holiday'] == HolidayEnum::HOLIDAY || $leave_record_date->last()['holiday'] == HolidayEnum::HOLIDAY ) {
-            return [
-                'status' => -1,
-                'message' => '請假起始或結束日為假日'
-            ];
+            throw new CreateLeaveRecordExceptions('請假起始或結束日為假日');
         }
-        // 取非假日即為工作日 (因此不用判斷工作日數為0)
+        // 取工作日天數
         $willLeaveDays = $leave_record_date->where('holiday', HolidayEnum::WORKING)->count();
         // 起始日在下午扣除半天
         if ( $params['start_hour'] == LeaveTimeEnum::AFTERNOON ) {
@@ -231,10 +220,7 @@ class LeaveRecordsService
         $leave_start_date = date_parse($params['start_date']);
         $leave_end_date = date_parse($params['end_date']);
         if( $leave_end_date['year'] - $leave_start_date['year'] >= 2 ) {
-            return [
-                'status' => -1,
-                'message' => '請假期間超過兩年'
-            ];
+            throw new CreateLeaveRecordExceptions('請假期間超過兩年');
         }
         // 日本年度(目前僅特休，先列出組合)
         if( $leavePeriod == LeavePeriodEnum::JAPANYEAR ) {
@@ -329,10 +315,7 @@ class LeaveRecordsService
                     // 前年度或下年度合併事假超過上限
                     if( $leaved_simple_hours_previous_year + $leaved_familycare_hours_previous_year + $calendar_days_previous_year * LeaveMinimumEnum::FULLDAY > LeaveLimitEnum::SIMPLE * LeaveMinimumEnum::FULLDAY ||
                         $leaved_simple_hours_next_year + $leaved_familycare_hours_next_year + $calendar_days_next_year * LeaveMinimumEnum::FULLDAY > LeaveLimitEnum::SIMPLE * LeaveMinimumEnum::FULLDAY ) {
-                        return [
-                            'status' => -1,
-                            'message' => '家庭照顧假合併事假時數超過上限'
-                        ];
+                        throw new CreateLeaveRecordExceptions('家庭照顧假合併事假時數超過上限');
                     }
                 }
                 // 前年度或下年度超過上限
@@ -344,10 +327,7 @@ class LeaveRecordsService
                     } else if( $leaveLimitDays == LeaveLimitEnum::INFINITE ) {
                         // 沒有設定上限的假別
                     } else {
-                        return [
-                            'status' => -1,
-                            'message' => '請假時數超過上限'
-                        ];
+                        throw new CreateLeaveRecordExceptions('請假時數超過上限');
                     }
                 }
             // 同年度內請假
@@ -374,10 +354,7 @@ class LeaveRecordsService
                         ->sum('hours');
                     // 當月超過一天
                     if( $params['hours'] + $leaved_month_hours > LeaveMinimumEnum::FULLDAY ) {
-                        return [
-                            'status' => -1,
-                            'message' => '超過生理假每月上限一日'
-                        ];
+                        throw new CreateLeaveRecordExceptions('生理假每月上限一日');
                     }
                     // 計算整年度生理假天數
                     $leaved_period_hours = $leave_total_records
@@ -411,10 +388,7 @@ class LeaveRecordsService
                     $leaved_familycare_hours -= $this->calculateRedundantLeaveHoursInYear($leave_total_records, LeaveTypesEnum::FAMILYCARE, $leave_start_date['year']);
                     // 合併事假超過上限
                     if( $leaved_simple_hours + $leaved_familycare_hours + $params['hours'] > LeaveLimitEnum::SIMPLE * LeaveMinimumEnum::FULLDAY ) {
-                        return [
-                            'status' => -1,
-                            'message' => '家庭照顧假合併事假時數超過上限'
-                        ];
+                        throw new CreateLeaveRecordExceptions('家庭照顧假合併事假時數超過上限');
                     }
                 }
                 // 超過上限
@@ -425,10 +399,7 @@ class LeaveRecordsService
                     } else if( $leaveLimitDays == LeaveLimitEnum::INFINITE ) {
                         // 沒有設定上限的假別
                     } else {
-                        return [
-                            'status' => -1,
-                            'message' => '請假時數超過上限'
-                        ];
+                        throw new CreateLeaveRecordExceptions('請假時數超過上限');
                     }
                 }
             }
