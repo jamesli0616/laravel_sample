@@ -146,15 +146,6 @@ class LeaveRecordsService
             $params['start_date'],
             $params['end_date']
         );
-        $willLeaveDays = $leave_record_date->count();
-        // 起始日在下午扣除半天
-        if ( $params['start_hour'] == LeaveTimeEnum::AFTERNOON ) {
-            $willLeaveDays -= 0.5;
-        }
-        // 結束日在上午扣除半天
-        if ( $params['end_hour'] == LeaveTimeEnum::MORNING ) {
-            $willLeaveDays -= 0.5;
-        }
         // 請假起始或結束日期碰到假日
         if( $leave_record_date->first()['holiday'] == HolidayEnum::HOLIDAY || $leave_record_date->last()['holiday'] == HolidayEnum::HOLIDAY ) {
             return [
@@ -162,17 +153,15 @@ class LeaveRecordsService
                 'message' => '請假起始或結束日為假日'
             ];
         }
-        // 請假範圍扣除假日天數
-        foreach($leave_record_date as $rows) {
-            if( $rows['holiday'] == HolidayEnum::HOLIDAY ) {
-                $willLeaveDays--;
-            }
+        // 取非假日即為工作日 (因此不用判斷工作日數為0)
+        $willLeaveDays = $leave_record_date->where('holiday', HolidayEnum::WORKING)->count();
+        // 起始日在下午扣除半天
+        if ( $params['start_hour'] == LeaveTimeEnum::AFTERNOON ) {
+            $willLeaveDays -= 0.5;
         }
-        if( $willLeaveDays <= 0 ) {
-            return [
-                'status' => -1,
-                'message' => '請假時間小於等於0'
-            ];
+        // 結束日在上午扣除半天
+        if ( $params['end_hour'] == LeaveTimeEnum::MORNING ) {
+            $willLeaveDays -= 0.5;
         }
         // 請假假別時數上限判斷
         $leaveLimitDays = 0; // 上限(天)，預設0
@@ -240,7 +229,7 @@ class LeaveRecordsService
 
         // 本次請假的起始結束日期
         $leave_start_date = date_parse($params['start_date']);
-        $leave_end_date = date_parse($params['start_date']);
+        $leave_end_date = date_parse($params['end_date']);
         if( $leave_end_date['year'] - $leave_start_date['year'] >= 2 ) {
             return [
                 'status' => -1,
@@ -299,18 +288,20 @@ class LeaveRecordsService
                 $leaved_hours_next_year -= $this->calculateRedundantLeaveHoursInYear($leave_total_records_next_year, $params['type'], $leave_end_date['year']);
 
                 // 本次請假前年度覆蓋天數
-                $calendar_days_previous_year = $this->CalendarRepository->getCalendarByDateRange(
-                    $params['start_date'],
-                    $leave_start_date['year'].'-12-31'
-                )->count();
+                $calendar_days_previous_year = $leave_record_date
+                    ->where('date', '>=', $params['start_date'])
+                    ->where('date', '<=',  $leave_start_date['year'].'-12-31')
+                    ->where('holiday', HolidayEnum::WORKING)
+                    ->count();
                 if ( $params['start_hour'] == LeaveTimeEnum::AFTERNOON ) {
                     $calendar_days_previous_year -= 0.5;
                 }
                 // 本次請假下年度覆蓋天數
-                $calendar_days_next_year = $this->CalendarRepository->getCalendarByDateRange(
-                    $leave_end_date['year'].'-01-01',
-                    $params['end_date']
-                )->count();
+                $calendar_days_next_year = $leave_record_date
+                    ->where('date', '>=', $leave_end_date['year'].'-01-01')
+                    ->where('date', '<=',  $params['end_date'])
+                    ->where('holiday', HolidayEnum::WORKING)
+                    ->count();
                 if ( $params['end_hour'] == LeaveTimeEnum::MORNING ) {
                     $calendar_days_next_year -= 0.5;
                 }

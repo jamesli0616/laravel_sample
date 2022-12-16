@@ -11,8 +11,6 @@ class CalendarPresenter
         switch($holiday) {
         case HolidayEnum::WORKING:
             return '工作日';
-        case HolidayEnum::UNDEFINE:
-            return '未定義';
         case HolidayEnum::HOLIDAY:
             return '例假日';
         }
