@@ -92,7 +92,11 @@
                             @endif
                         @endif
                         <td onclick="loadCalendarDate(this);" id="{{$rows['date']}}" holiday-type="{{$rows['holiday']}}">
-                            <span class="date_back">{{ date('d', strtotime($rows['date'])) }}</span>
+                            @if( $rows['holiday'] == 2 )
+                                <span style="color:red;" class="date_back">{{ date('d', strtotime($rows['date'])) }}</span>
+                            @else
+                                <span class="date_back">{{ date('d', strtotime($rows['date'])) }}</span>
+                            @endif
                             <div class="date_front">{{ $rows['comment'] }}</div>
                         </td>
                         @if(date('w', strtotime($rows['date'])) == 6 )
