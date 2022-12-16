@@ -108,7 +108,7 @@
         $('input[name=\'start_date\']').val(setStartTime);
         $('input[name=\'end_date\']').val(setEndTime);
         $('input[name=\'leave_type\']').val(setType);
-        $('input[name=\'hours\']').val(setPeriod);
+        $('input[name=\'hours\']').val(setHours);
         $('#validLeaveRecord_form').show();
     }
 </script>
