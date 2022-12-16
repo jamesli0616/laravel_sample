@@ -15,6 +15,70 @@ use App\Enums\HolidayEnum;
 
 class LeaveRecordsService
 {
+    // 各假別的 上限 / 計算年度 / 最小時數 設定項目
+    protected $LEAVE_CONFIG_ARRAY = [
+        LeaveTypesEnum::SICK => [ // 病假
+            'Limit' => LeaveLimitEnum::SICK, 
+            'Period' => LeavePeriodEnum::SIMPLEYEAR, 
+            'Minimum' => LeaveMinimumEnum::HALFDAY
+        ],
+        LeaveTypesEnum::SIMPLE => [ // 事假
+            'Limit' => LeaveLimitEnum::SIMPLE, 
+            'Period' => LeavePeriodEnum::SIMPLEYEAR, 
+            'Minimum' => LeaveMinimumEnum::HALFDAY
+        ],
+        LeaveTypesEnum::PERIOD => [ // 生理假
+            'Limit' => LeaveLimitEnum::PERIOD, 
+            'Period' => LeavePeriodEnum::SIMPLEYEAR, 
+            'Minimum' => LeaveMinimumEnum::HALFDAY
+        ],
+        LeaveTypesEnum::FUNERAL => [ // 喪假
+            'Limit' => LeaveLimitEnum::INFINITE, 
+            'Period' => LeavePeriodEnum::SIMPLEYEAR, 
+            'Minimum' => LeaveMinimumEnum::HALFDAY
+        ],
+        LeaveTypesEnum::INJURY => [ // 工傷病假
+            'Limit' => LeaveLimitEnum::INFINITE, 
+            'Period' => LeavePeriodEnum::SIMPLEYEAR, 
+            'Minimum' => LeaveMinimumEnum::HALFDAY
+        ],
+        LeaveTypesEnum::MATERNITY => [ // 產假
+            'Limit' => LeaveLimitEnum::INFINITE, 
+            'Period' => LeavePeriodEnum::SIMPLEYEAR, 
+            'Minimum' => LeaveMinimumEnum::HALFDAY
+        ],
+        LeaveTypesEnum::TOCOLYSIS => [ // 安胎休養假
+            'Limit' => LeaveLimitEnum::TOCOLYSIS, 
+            'Period' => LeavePeriodEnum::SIMPLEYEAR, 
+            'Minimum' => LeaveMinimumEnum::HALFDAY
+        ],
+        LeaveTypesEnum::PATERNITY => [ // 陪產假
+            'Limit' => LeaveLimitEnum::PATERNITY, 
+            'Period' => LeavePeriodEnum::SIMPLEYEAR, 
+            'Minimum' => LeaveMinimumEnum::HALFDAY
+        ],
+        LeaveTypesEnum::PRENTAL => [ // 產檢假
+            'Limit' => LeaveLimitEnum::INFINITE, 
+            'Period' => LeavePeriodEnum::SIMPLEYEAR, 
+            'Minimum' => LeaveMinimumEnum::HALFDAY
+        ],
+        LeaveTypesEnum::FAMILYCARE => [ // 家庭照顧假
+            'Limit' => LeaveLimitEnum::FAMILYCARE, 
+            'Period' => LeavePeriodEnum::SIMPLEYEAR, 
+            'Minimum' => LeaveMinimumEnum::HALFDAY
+        ],
+        LeaveTypesEnum::OFFICIAL => [ // 公假
+            'Limit' => LeaveLimitEnum::INFINITE, 
+            'Period' => LeavePeriodEnum::SIMPLEYEAR, 
+            'Minimum' => LeaveMinimumEnum::HALFDAY
+        ],
+        LeaveTypesEnum::SPECIAL => [ // 特休
+            'Limit' => LeaveLimitEnum::SPECIAL, 
+            'Period' => LeavePeriodEnum::JAPANYEAR, 
+            'Minimum' => LeaveMinimumEnum::HALFDAY
+        ]
+    ];
+
     protected $LeaveRecordsRepository;
     protected $CalendarRepository;
 
@@ -86,95 +150,27 @@ class LeaveRecordsService
         return $year_days->where('holiday', HolidayEnum::WORKING)->count();
     }
     
-    // 計算要排除的不同計算年度假別時數
-    public function calculateRedundantLeaveHoursInYear(Collection $leave_records, int $type, int $year)
+    // 計算該年度的假別總時數
+    public function calculateLeaveHoursInYear(Collection $leave_records, int $type, int $year)
     {
-        // 跨年度要扣除的時數
-        $redundant_hours = 0;
+        // 該假別總時數
+        $total_hours = $leave_records->where('type', $params['type'])->sum('hours');
 
         // 起始日期有跨年，扣掉該假前年度時數
         $check_past_year = $leave_records->where('type', $type)->where('start_date', '<', $year.'-01-01');
         if( !$check_past_year->isEmpty() ) {
             $next_year_workdays = $this->getPastYearCalendarWorkdaysToBottom($year - 1, $check_past_year->values()[0]['start_date']);
-            $redundant_hours += $next_year_workdays * LeaveMinimumEnum::FULLDAY;
+            $total_hours -= $next_year_workdays * LeaveMinimumEnum::FULLDAY;
         }
 
         // 結束日期有跨年，扣掉該假跨年度時數
         $check_past_year = $leave_records->where('type', $type)->where('end_date', '>', $year.'-12-31');
         if( !$check_past_year->isEmpty() ) {
             $next_year_workdays = $this->getPastYearCalendarWorkdaysFromHead($year + 1, $check_past_year->values()[0]['end_date']);
-            $redundant_hours += $next_year_workdays * LeaveMinimumEnum::FULLDAY;
+            $total_hours -= $next_year_workdays * LeaveMinimumEnum::FULLDAY;
         }
 
-        return $redundant_hours;
-    }
-
-    // 取得假別天數上限
-    public function getLeaveLimitDays(int $type)
-    {
-        switch($type) 
-        {
-        case LeaveTypesEnum::SICK:
-            return LeaveLimitEnum::SICK;
-        case LeaveTypesEnum::SIMPLE:
-            return LeaveLimitEnum::SIMPLE;
-        case LeaveTypesEnum::PERIOD:
-            return LeaveLimitEnum::PERIOD;
-        case LeaveTypesEnum::TOCOLYSIS:
-            return LeaveLimitEnum::TOCOLYSIS;
-        case LeaveTypesEnum::PATERNITY:
-            return LeaveLimitEnum::PATERNITY;
-        case LeaveTypesEnum::FAMILYCARE:
-            return LeaveLimitEnum::FAMILYCARE;
-        case LeaveTypesEnum::MATERNITY:
-        case LeaveTypesEnum::OFFICIAL:
-        case LeaveTypesEnum::FUNERAL:
-        case LeaveTypesEnum::INJURY:
-            return LeaveLimitEnum::INFINITE;
-        case LeaveTypesEnum::SPECIAL:
-            return LeaveLimitEnum::SPECIAL;
-        }
-    }
-
-    // 取得假別計算年度
-    public function getLeavePeriod(int $type)
-    {
-        switch($type) 
-        {
-        case LeaveTypesEnum::SICK:
-        case LeaveTypesEnum::SIMPLE:
-        case LeaveTypesEnum::PERIOD:
-        case LeaveTypesEnum::FUNERAL:
-        case LeaveTypesEnum::INJURY:
-        case LeaveTypesEnum::MATERNITY:
-        case LeaveTypesEnum::TOCOLYSIS:
-        case LeaveTypesEnum::PATERNITY:
-        case LeaveTypesEnum::FAMILYCARE:
-        case LeaveTypesEnum::OFFICIAL:
-            return LeavePeriodEnum::SIMPLEYEAR;
-        case LeaveTypesEnum::SPECIAL:
-            return LeavePeriodEnum::JAPANYEAR;
-        }
-    }
-
-    // 取得假別時數最小單位
-    public function getLeaveMinimum(int $type)
-    {
-        switch($type) 
-        {
-        case LeaveTypesEnum::SICK:
-        case LeaveTypesEnum::SIMPLE:
-        case LeaveTypesEnum::PERIOD:
-        case LeaveTypesEnum::FUNERAL:
-        case LeaveTypesEnum::INJURY:
-        case LeaveTypesEnum::MATERNITY:
-        case LeaveTypesEnum::TOCOLYSIS:
-        case LeaveTypesEnum::PATERNITY:
-        case LeaveTypesEnum::FAMILYCARE:
-        case LeaveTypesEnum::OFFICIAL:
-        case LeaveTypesEnum::SPECIAL:
-            return LeaveMinimumEnum::HALFDAY;
-        }
+        return $total_hours;
     }
 
     public function createLeaveRecords(array $params)
@@ -182,13 +178,6 @@ class LeaveRecordsService
         // 請假起始結束時間判斷
         if ( strtotime($params['start_date']) > strtotime($params['end_date']) ) {
             throw new CreateLeaveRecordExceptions('起始時間大於結束時間');
-        }
-
-        // 行事曆未建立請假日期 (因為行事曆通常為整年份建立，因此只檢查頭尾日期當作判斷[未考慮行事曆日期有跳日狀況])
-        $start_date_exists = $this->CalendarRepository->getCalendarByDateRange($params['start_date'], $params['start_date']);
-        $end_date_exists = $this->CalendarRepository->getCalendarByDateRange($params['end_date'], $params['end_date']);
-        if ( $start_date_exists->isEmpty() || $end_date_exists->isEmpty() ) {
-            throw new CreateLeaveRecordExceptions('指定日期區間行事曆尚未建立');
         }
 
         // 請假時間重疊判斷
@@ -224,11 +213,11 @@ class LeaveRecordsService
         }
 
         // 請假假別時數上限(天)
-        $leaveLimitDays = $this->getLeaveLimitDays($params['type']);
+        $leaveLimitDays = $this->LEAVE_CONFIG_ARRAY[$params['type']]['Limit'];
         // 請假假別運算年度
-        $leavePeriod = $this->getLeavePeriod($params['type']);
+        $leavePeriod = $this->LEAVE_CONFIG_ARRAY[$params['type']]['Period'];
         // 請假假別時數最小單位
-        $leaveMinimum = $this->getLeaveMinimum($params['type']);
+        $leaveMinimum = $this->LEAVE_CONFIG_ARRAY[$params['type']]['Minimum'];
         // 休假天數轉為休假總時數
         $params['hours'] = $willLeaveDays * LeaveMinimumEnum::FULLDAY;
 
@@ -286,13 +275,9 @@ class LeaveRecordsService
                 )->where('user_id', $params['user_id']);
 
                 // 前年度假總時數
-                $leaved_hours_previous_year = $leave_total_records_previous_year->where('type', $params['type'])->sum('hours');
-                // 扣除跨年時數
-                $leaved_hours_previous_year -= $this->calculateRedundantLeaveHoursInYear($leave_total_records_previous_year, $params['type'], $leave_start_date['year']);
+                $leaved_hours_previous_year = $this->calculateLeaveHoursInYear($leave_total_records_previous_year, $params['type'], $leave_start_date['year']);
                 // 下年度假總時數
-                $leaved_hours_next_year = $leave_total_records_next_year->where('type', $params['type'])->sum('hours');
-                // 扣除跨年時數
-                $leaved_hours_next_year -= $this->calculateRedundantLeaveHoursInYear($leave_total_records_next_year, $params['type'], $leave_end_date['year']);
+                $leaved_hours_next_year = $this->calculateLeaveHoursInYear($leave_total_records_next_year, $params['type'], $leave_end_date['year']);
 
                 // 本次請假前年度覆蓋天數
                 $calendar_days_previous_year = $leave_record_date
@@ -316,26 +301,13 @@ class LeaveRecordsService
                 if( $params['type'] == LeaveTypesEnum::FAMILYCARE ) {
 
                     // 前年度事假總時數
-                    $leaved_simple_hours_previous_year = $leave_total_records_previous_year->where('type', LeaveTypesEnum::SIMPLE)->sum('hours');
-                    // 扣除跨年時數
-                    $leaved_simple_hours_previous_year -= $this->calculateRedundantLeaveHoursInYear($leave_total_records_previous_year, LeaveTypesEnum::SIMPLE, $leave_start_date['year']);
+                    $leaved_simple_hours_previous_year = $this->calculateLeaveHoursInYear($leave_total_records_previous_year, LeaveTypesEnum::SIMPLE, $leave_start_date['year']);
                     // 下年度事假總時數
-                    $leaved_simple_hours_next_year = $leave_total_records_next_year->where('type', LeaveTypesEnum::SIMPLE)->sum('hours');
-                    // 扣除跨年時數
-                    $leaved_simple_hours_next_year -= $this->calculateRedundantLeaveHoursInYear($leave_total_records_next_year, LeaveTypesEnum::SIMPLE, $leave_end_date['year']);
-
-                    // 前年度家庭照顧假總時數
-                    $leaved_familycare_hours_previous_year = $leave_total_records_previous_year->where('type', LeaveTypesEnum::FAMILYCARE)->sum('hours');
-                    // 扣除跨年時數
-                    $leaved_familycare_hours_previous_year -= $this->calculateRedundantLeaveHoursInYear($leave_total_records_previous_year, LeaveTypesEnum::FAMILYCARE, $leave_start_date['year']);
-                    // 下年度家庭照顧假總時數
-                    $leaved_familycare_hours_next_year = $leave_total_records_next_year->where('type', LeaveTypesEnum::FAMILYCARE)->sum('hours');
-                    // 扣除跨年時數
-                    $leaved_familycare_hours_next_year -= $this->calculateRedundantLeaveHoursInYear($leave_total_records_next_year, LeaveTypesEnum::FAMILYCARE, $leave_end_date['year']);
+                    $leaved_simple_hours_next_year = $this->calculateLeaveHoursInYear($leave_total_records_next_year, LeaveTypesEnum::SIMPLE, $leave_end_date['year']);
 
                     // 前年度或下年度合併事假超過上限
-                    if( $leaved_simple_hours_previous_year + $leaved_familycare_hours_previous_year + $calendar_days_previous_year * LeaveMinimumEnum::FULLDAY > LeaveLimitEnum::SIMPLE * LeaveMinimumEnum::FULLDAY ||
-                        $leaved_simple_hours_next_year + $leaved_familycare_hours_next_year + $calendar_days_next_year * LeaveMinimumEnum::FULLDAY > LeaveLimitEnum::SIMPLE * LeaveMinimumEnum::FULLDAY ) {
+                    if( $leaved_simple_hours_previous_year + $leaved_hours_previous_year + $calendar_days_previous_year * LeaveMinimumEnum::FULLDAY > LeaveLimitEnum::SIMPLE * LeaveMinimumEnum::FULLDAY ||
+                        $leaved_simple_hours_next_year + $leaved_hours_next_year + $calendar_days_next_year * LeaveMinimumEnum::FULLDAY > LeaveLimitEnum::SIMPLE * LeaveMinimumEnum::FULLDAY ) {
                         throw new CreateLeaveRecordExceptions('家庭照顧假合併事假時數超過上限');
                     }
                 }
@@ -359,15 +331,13 @@ class LeaveRecordsService
                     $leave_start_date['year'].'-12-31'
                 )->where('user_id', $params['user_id']);
 
-                // 該假別的總時數
-                $leaved_hours = $leave_total_records->where('type', $params['type'])->sum('hours');
-                // 扣除跨年時數
-                $leaved_hours -= $this->calculateRedundantLeaveHoursInYear($leave_total_records, $params['type'], $leave_start_date['year']);
+                // 該假別年度總時數
+                $leaved_hours = $this->calculateLeaveHoursInYear($leave_total_records, $params['type'], $leave_start_date['year']);
 
                 // 生理假 (因無法跨年度僅檢查同年度假單即可)
                 if( $params['type'] == LeaveTypesEnum::PERIOD ) {
                     // 當月最後一日
-                    $last_date_in_month = date("Y-m-t", $start_date);
+                    $last_date_in_month = date("Y-m-t", strtotime($params['start_date']));
                     // 當月生理假總時數
                     $leaved_month_hours = $leave_total_records
                         ->where('type', $params['type'])
@@ -378,20 +348,12 @@ class LeaveRecordsService
                     if( $params['hours'] + $leaved_month_hours > LeaveMinimumEnum::FULLDAY ) {
                         throw new CreateLeaveRecordExceptions('生理假每月上限一日');
                     }
-                    // 計算整年度生理假時數
-                    $leaved_period_hours = $leave_total_records
-                        ->where('type', $params['type'])
-                        ->where('start_date', '>=', $leave_start_date['year'].'-01-01')
-                        ->where('end_date', '<=', $leave_start_date['year'].'-12-31')
-                        ->sum('hours');
                     // 包含此次生理假累計總時數
-                    $willLeavePeriodHours = $leaved_period_hours + $params['hours'];
+                    $willLeavePeriodHours = $leaved_hours + $params['hours'];
                     // 三天以上開始要併入病假判斷 (第四天開始計算)
                     $combine_sick_hours =  $willLeavePeriodHours - LeaveMinimumEnum::FULLDAY * 3;
                     if( $combine_sick_hours > 0 ) {
-                        $leaved_sick_hours = $leave_total_records->where('type', LeaveTypesEnum::SICK)->sum('hours');
-                        // 扣除跨年時數
-                        $leaved_sick_hours -= $this->calculateRedundantLeaveHoursInYear($leave_total_records, LeaveTypesEnum::SICK, $leave_start_date['year']);
+                        $leaved_sick_hours = $this->calculateLeaveHoursInYear($leave_total_records, LeaveTypesEnum::SICK, $leave_start_date['year']);
                         // 合併病假超過上限
                         if( $combine_sick_hours + $leaved_sick_hours > LeaveLimitEnum::SICK * LeaveMinimumEnum::FULLDAY ) {
                             $params['warning'] = '已超過上限';
@@ -401,15 +363,9 @@ class LeaveRecordsService
                 // 家庭照顧假併入事假檢查
                 if( $params['type'] == LeaveTypesEnum::FAMILYCARE ) {
                     // 當年度事假總時數
-                    $leaved_simple_hours = $leave_total_records->where('type', LeaveTypesEnum::SIMPLE)->sum('hours');
-                    // 扣除跨年時數
-                    $leaved_simple_hours -= $this->calculateRedundantLeaveHoursInYear($leave_total_records, LeaveTypesEnum::SIMPLE, $leave_start_date['year']);
-                    // 當年度家庭照顧假總時數
-                    $leaved_familycare_hours =  $leave_total_records->where('type', LeaveTypesEnum::FAMILYCARE)->sum('hours');
-                    // 扣除跨年時數
-                    $leaved_familycare_hours -= $this->calculateRedundantLeaveHoursInYear($leave_total_records, LeaveTypesEnum::FAMILYCARE, $leave_start_date['year']);
+                    $leaved_simple_hours = $this->calculateLeaveHoursInYear($leave_total_records, LeaveTypesEnum::SIMPLE, $leave_start_date['year']);
                     // 合併事假超過上限
-                    if( $leaved_simple_hours + $leaved_familycare_hours + $params['hours'] > LeaveLimitEnum::SIMPLE * LeaveMinimumEnum::FULLDAY ) {
+                    if( $leaved_simple_hours + $leaved_hours + $params['hours'] > LeaveLimitEnum::SIMPLE * LeaveMinimumEnum::FULLDAY ) {
                         throw new CreateLeaveRecordExceptions('家庭照顧假合併事假時數超過上限');
                     }
                 }
