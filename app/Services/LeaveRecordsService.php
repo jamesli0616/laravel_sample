@@ -241,7 +241,7 @@ class LeaveRecordsService
         if( $leave_end_date['year'] - $leave_start_date['year'] >= 2 ) {
             throw new CreateLeaveRecordExceptions('請假期間超過兩年');
         }
-        
+
         // 日本年度(目前僅特休，先列出組合)
         if( $leavePeriod == LeavePeriodEnum::JAPANYEAR ) {
             // 相同年份
@@ -271,7 +271,7 @@ class LeaveRecordsService
             }
         // 一般年度
         } else {
-            // 跨年度請假
+            // 本筆假單跨越年度
             if( $leave_start_date['year'] != $leave_end_date['year'] ) {
                 // User當年度假別紀錄 (包含跨年度假單)
                 $leave_total_records_previous_year = $this->LeaveRecordsRepository->getLeaveRecordsByDataRange(
@@ -350,7 +350,7 @@ class LeaveRecordsService
                         throw new CreateLeaveRecordExceptions('請假時數超過上限');
                     }
                 }
-            // 同年度內請假
+            // 本筆假單同年度
             } else {
                 // User指定年內所有假單紀錄 (包含跨年度假單)
                 $leave_total_records = $this->LeaveRecordsRepository->getLeaveRecordsByDataRange(
@@ -363,8 +363,9 @@ class LeaveRecordsService
                 // 扣除跨年時數
                 $leaved_hours -= $this->calculateRedundantLeaveHoursInYear($leave_total_records, $params['type'], $leave_start_date['year']);
 
-                // 生理假 (因無法跨年度僅在此檢查)
+                // 生理假 (因無法跨年度僅檢查同年度假單即可)
                 if( $params['type'] == LeaveTypesEnum::PERIOD ) {
+                    // 當月最後一日
                     $last_date_in_month = date("Y-m-t", $start_date);
                     // 當月生理假總時數
                     $leaved_month_hours = $leave_total_records
@@ -376,7 +377,7 @@ class LeaveRecordsService
                     if( $params['hours'] + $leaved_month_hours > LeaveMinimumEnum::FULLDAY ) {
                         throw new CreateLeaveRecordExceptions('生理假每月上限一日');
                     }
-                    // 計算整年度生理假天數
+                    // 計算整年度生理假時數
                     $leaved_period_hours = $leave_total_records
                         ->where('type', $params['type'])
                         ->where('start_date', '>=', $leave_start_date['year'].'-01-01')
@@ -384,7 +385,7 @@ class LeaveRecordsService
                         ->sum('hours');
                     // 包含此次生理假累計總時數
                     $willLeavePeriodHours = $leaved_period_hours + $params['hours'];
-                    // 三天以上開始要併入病假判斷
+                    // 三天以上開始要併入病假判斷 (第四天開始計算)
                     $combine_sick_hours =  $willLeavePeriodHours - LeaveMinimumEnum::FULLDAY * 3;
                     if( $combine_sick_hours > 0 ) {
                         $leaved_sick_hours = $leave_total_records->where('type', LeaveTypesEnum::SICK)->sum('hours');
