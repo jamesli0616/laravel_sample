@@ -74,6 +74,7 @@ class LeaveRecordsService
 
         return $year_days->where('holiday', HolidayEnum::WORKING)->count();
     }
+
     // 取得指定日期~該年年末的工作天數 (扣除跨年度請假)
     public function getPastYearCalendarWorkdaysToBottom(int $year, string $start_date)
     {
@@ -108,20 +109,91 @@ class LeaveRecordsService
         return $redundant_hours;
     }
 
+    // 取得假別天數上限
+    public function getLeaveLimitDays(int $type)
+    {
+        switch($type) 
+        {
+        case LeaveTypesEnum::SICK:
+            return LeaveLimitEnum::SICK;
+        case LeaveTypesEnum::SIMPLE:
+            return LeaveLimitEnum::SIMPLE;
+        case LeaveTypesEnum::PERIOD:
+            return LeaveLimitEnum::PERIOD;
+        case LeaveTypesEnum::FUNERAL:
+            return LeaveLimitEnum::FUNERAL;
+        case LeaveTypesEnum::INJURY:
+            return LeaveLimitEnum::INJURY;
+        case LeaveTypesEnum::MATERNITY:
+            return LeaveLimitEnum::MATERNITY;
+        case LeaveTypesEnum::TOCOLYSIS:
+            return LeaveLimitEnum::TOCOLYSIS;
+        case LeaveTypesEnum::PATERNITY:
+            return LeaveLimitEnum::PATERNITY;
+        case LeaveTypesEnum::FAMILYCARE:
+            return LeaveLimitEnum::FAMILYCARE;
+        case LeaveTypesEnum::OFFICIAL:
+            return LeaveLimitEnum::OFFICIAL;
+        case LeaveTypesEnum::SPECIAL:
+            return LeaveLimitEnum::SPECIAL;
+        }
+    }
+
+    // 取得假別計算年度
+    public function getLeavePeriod(int $type)
+    {
+        switch($type) 
+        {
+        case LeaveTypesEnum::SICK:
+        case LeaveTypesEnum::SIMPLE:
+        case LeaveTypesEnum::PERIOD:
+        case LeaveTypesEnum::FUNERAL:
+        case LeaveTypesEnum::INJURY:
+        case LeaveTypesEnum::MATERNITY:
+        case LeaveTypesEnum::TOCOLYSIS:
+        case LeaveTypesEnum::PATERNITY:
+        case LeaveTypesEnum::FAMILYCARE:
+        case LeaveTypesEnum::OFFICIAL:
+            return LeavePeriodEnum::SIMPLEYEAR;
+        case LeaveTypesEnum::SPECIAL:
+            return LeavePeriodEnum::JAPANYEAR;
+        }
+    }
+
+    // 取得假別時數最小單位
+    public function getLeaveMinimum(int $type)
+    {
+        switch($type) 
+        {
+        case LeaveTypesEnum::SICK:
+        case LeaveTypesEnum::SIMPLE:
+        case LeaveTypesEnum::PERIOD:
+        case LeaveTypesEnum::FUNERAL:
+        case LeaveTypesEnum::INJURY:
+        case LeaveTypesEnum::MATERNITY:
+        case LeaveTypesEnum::TOCOLYSIS:
+        case LeaveTypesEnum::PATERNITY:
+        case LeaveTypesEnum::FAMILYCARE:
+        case LeaveTypesEnum::OFFICIAL:
+        case LeaveTypesEnum::SPECIAL:
+            return LeaveMinimumEnum::HALFDAY;
+        }
+    }
+
     public function createLeaveRecords(array $params)
     {
-        $start_date = strtotime($params['start_date']);
-        $end_date = strtotime($params['end_date']);
         // 請假起始結束時間判斷
-        if ( $start_date > $end_date ) {
+        if ( strtotime($params['start_date']) > strtotime($params['end_date']) ) {
             throw new CreateLeaveRecordExceptions('起始時間大於結束時間');
         }
+
         // 行事曆未建立請假日期 (因為行事曆通常為整年份建立，因此只檢查頭尾日期當作判斷[未考慮行事曆日期有跳日狀況])
         $start_date_exists = $this->CalendarRepository->getCalendarByDateRange($params['start_date'], $params['start_date']);
         $end_date_exists = $this->CalendarRepository->getCalendarByDateRange($params['end_date'], $params['end_date']);
         if ( $start_date_exists->isEmpty() || $end_date_exists->isEmpty() ) {
             throw new CreateLeaveRecordExceptions('指定日期區間行事曆尚未建立');
         }
+
         // 請假時間重疊判斷
         $isConflict = $this->LeaveRecordsRepository->getLeaveRecordConflict(
             $params['start_date'],
@@ -133,6 +205,7 @@ class LeaveRecordsService
         if ( !$isConflict->isEmpty() ) {
             throw new CreateLeaveRecordExceptions('請假日期與其他假單重疊');
         }
+
         // 請假計算天數
         $leave_record_date = $this->CalendarRepository->getCalendarByDateRange(
             $params['start_date'],
@@ -152,67 +225,13 @@ class LeaveRecordsService
         if ( $params['end_hour'] == LeaveTimeEnum::MORNING ) {
             $willLeaveDays -= 0.5;
         }
-        // 請假假別時數上限判斷
-        $leaveLimitDays = 0; // 上限(天)，預設0
-        $leavePeriod = LeavePeriodEnum::SIMPLEYEAR; // 運算年度
-        $leaveMinimum = LeaveMinimumEnum::HALFDAY; // 最小單位
-        switch($params['type']) {
-        case LeaveTypesEnum::SICK:
-            $leaveLimitDays = LeaveLimitEnum::SICK;
-            $leavePeriod = LeavePeriodEnum::SIMPLEYEAR;
-            $leaveMinimum = LeaveMinimumEnum::HALFDAY;
-            break;
-        case LeaveTypesEnum::SIMPLE:
-            $leaveLimitDays = LeaveLimitEnum::SIMPLE;
-            $leavePeriod = LeavePeriodEnum::SIMPLEYEAR;
-            $leaveMinimum = LeaveMinimumEnum::HALFDAY;
-            break;
-        case LeaveTypesEnum::PERIOD:
-            $leaveLimitDays = LeaveLimitEnum::PERIOD;
-            $leavePeriod = LeavePeriodEnum::SIMPLEYEAR;
-            $leaveMinimum = LeaveMinimumEnum::HALFDAY;
-            break;
-        case LeaveTypesEnum::FUNERAL:
-            $leaveLimitDays = LeaveLimitEnum::INFINITE;
-            $leavePeriod = LeavePeriodEnum::SIMPLEYEAR;
-            $leaveMinimum = LeaveMinimumEnum::HALFDAY;
-            break;
-        case LeaveTypesEnum::INJURY:
-            $leaveLimitDays = LeaveLimitEnum::INFINITE;
-            $leavePeriod = LeavePeriodEnum::SIMPLEYEAR;
-            $leaveMinimum = LeaveMinimumEnum::HALFDAY;
-            break;
-        case LeaveTypesEnum::MATERNITY:
-            $leaveLimitDays = LeaveLimitEnum::INFINITE;
-            $leavePeriod = LeavePeriodEnum::SIMPLEYEAR;
-            $leaveMinimum = LeaveMinimumEnum::HALFDAY;
-            break;
-        case LeaveTypesEnum::TOCOLYSIS:
-            $leaveLimitDays = LeaveLimitEnum::TOCOLYSIS;
-            $leavePeriod = LeavePeriodEnum::SIMPLEYEAR;
-            $leaveMinimum = LeaveMinimumEnum::HALFDAY;
-            break;
-        case LeaveTypesEnum::PATERNITY:
-            $leaveLimitDays = LeaveLimitEnum::PATERNITY;
-            $leavePeriod = LeavePeriodEnum::SIMPLEYEAR;
-            $leaveMinimum = LeaveMinimumEnum::HALFDAY;
-            break;
-        case LeaveTypesEnum::FAMILYCARE:
-            $leaveLimitDays = LeaveLimitEnum::FAMILYCARE;
-            $leavePeriod = LeavePeriodEnum::SIMPLEYEAR;
-            $leaveMinimum = LeaveMinimumEnum::HALFDAY;
-            break;
-        case LeaveTypesEnum::OFFICIAL:
-            $leaveLimitDays = LeaveLimitEnum::INFINITE;
-            $leavePeriod = LeavePeriodEnum::SIMPLEYEAR;
-            $leaveMinimum = LeaveMinimumEnum::HALFDAY;
-            break;
-        case LeaveTypesEnum::SPECIAL:
-            $leaveLimitDays = LeaveLimitEnum::SPECIAL;
-            $leavePeriod = LeavePeriodEnum::JAPANYEAR;
-            $leaveMinimum = LeaveMinimumEnum::HALFDAY;
-            break;
-        }
+
+        // 請假假別時數上限(天)
+        $leaveLimitDays = $this->getLeaveLimitDays($params['type']);
+        // 請假假別運算年度
+        $leavePeriod = $this->getLeavePeriod($params['type']);
+        // 請假假別時數最小單位
+        $leaveMinimum = $this->getLeaveMinimum($params['type']);
         // 休假天數轉為休假總時數
         $params['hours'] = $willLeaveDays * LeaveMinimumEnum::FULLDAY;
 
@@ -222,6 +241,7 @@ class LeaveRecordsService
         if( $leave_end_date['year'] - $leave_start_date['year'] >= 2 ) {
             throw new CreateLeaveRecordExceptions('請假期間超過兩年');
         }
+        
         // 日本年度(目前僅特休，先列出組合)
         if( $leavePeriod == LeavePeriodEnum::JAPANYEAR ) {
             // 相同年份
