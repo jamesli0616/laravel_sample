@@ -37,25 +37,29 @@ class LeaveRecordsService
 
     public function getLeaveRecordsByYear(int $year)
     {
+        $leave_records = $this->LeaveRecordsRepository->getLeaveRecordsByDataRange(
+            $year.'-01-01',
+            $year.'-12-31'
+        );
+        $leave_records_all = $this->LeaveRecordsRepository->getLeaveRecordsByDataRange();
         return [
-            'leaveCalendar' => $this->LeaveRecordsRepository->getLeaveRecordsByDataRange(
-                $year.'-01-01',
-                $year.'-12-31'
-            ),
-            'leaveCalendarYears' => $this->distinctYears($this->LeaveRecordsRepository->getLeaveRecordsByDataRange()),
+            'leaveCalendar' => $leave_records,
+            'leaveCalendarYears' => $this->distinctYears($leave_records_all),
             'leaveRecordYear' => $year
         ];
     }
 
     public function getLeaveRecordsByUserID(int $user_id, int $year)
     {
+        $leave_records = $this->LeaveRecordsRepository->getLeaveRecordsByDataRangeAndUserID(
+            $user_id,
+            $year.'-01-01',
+            $year.'-12-31'
+        );
+        $leave_records_all = $this->LeaveRecordsRepository->getLeaveRecordsByDataRangeAndUserID($user_id);
         return [
-            'leaveCalendar' => $this->LeaveRecordsRepository->getLeaveRecordsByDataRangeAndUserID(
-                $user_id,
-                $year.'-01-01',
-                $year.'-12-31'
-            ),
-            'leaveCalendarYears' => $this->distinctYears($this->LeaveRecordsRepository->getLeaveRecordsByDataRangeAndUserID($user_id)),
+            'leaveCalendar' =>  $leave_records,
+            'leaveCalendarYears' => $this->distinctYears($leave_records_all),
             'leaveRecordYear' => $year
         ];
     }

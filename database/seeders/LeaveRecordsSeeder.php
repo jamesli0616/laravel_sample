@@ -15,7 +15,5 @@ class LeaveRecordsSeeder extends Seeder
     public function run()
     {
         DB::table('leave_records')->truncate();
-
-      
     }
 }
