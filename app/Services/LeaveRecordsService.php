@@ -51,12 +51,11 @@ class LeaveRecordsService
 
     public function getLeaveRecordsByUserID(int $user_id, int $year)
     {
-        $leave_records = $this->LeaveRecordsRepository->getLeaveRecordsByDataRangeAndUserID(
-            $user_id,
+        $leave_records = $this->LeaveRecordsRepository->getLeaveRecordsByDataRange(
             $year.'-01-01',
             $year.'-12-31'
-        );
-        $leave_records_all = $this->LeaveRecordsRepository->getLeaveRecordsByDataRangeAndUserID($user_id);
+        )->where('user_id', $user_id);
+        $leave_records_all = $this->LeaveRecordsRepository->getLeaveRecordsByDataRange()->where('user_id', $user_id);
         return [
             'leaveCalendar' =>  $leave_records,
             'leaveCalendarYears' => $this->distinctYears($leave_records_all),
@@ -279,18 +278,16 @@ class LeaveRecordsService
         } else {
             // 跨年度請假
             if( $leave_start_date['year'] != $leave_end_date['year'] ) {
-                // User當年度假別紀錄
-                $leave_total_records_previous_year = $this->LeaveRecordsRepository->getLeaveRecordsByDataRangeAndUserID(
-                    $params['user_id'],
+                // User當年度假別紀錄 (包含跨年度假單)
+                $leave_total_records_previous_year = $this->LeaveRecordsRepository->getLeaveRecordsByDataRange(
                     $leave_start_date['year'].'-01-01',
                     $leave_start_date['year'].'-12-31',
-                );
-                // User下年度假別紀錄
-                $leave_total_records_next_year = $this->LeaveRecordsRepository->getLeaveRecordsByDataRangeAndUserID(
-                    $params['user_id'],
+                )->where('user_id', $params['user_id']);
+                // User下年度假別紀錄 (包含跨年度假單)
+                $leave_total_records_next_year = $this->LeaveRecordsRepository->getLeaveRecordsByDataRange(
                     $leave_end_date['year'].'-01-01',
                     $leave_end_date['year'].'-12-31',
-                );
+                )->where('user_id', $params['user_id']);
 
                 // 前年度假總時數
                 $leaved_hours_previous_year = $leave_total_records_previous_year->where('type', $params['type'])->sum('hours');
@@ -364,12 +361,11 @@ class LeaveRecordsService
                 }
             // 同年度內請假
             } else {
-                // User所有假別紀錄
-                $leave_total_records = $this->LeaveRecordsRepository->getLeaveRecordsByDataRangeAndUserID(
-                    $params['user_id'],
+                // User指定年內所有假單紀錄 (包含跨年度假單)
+                $leave_total_records = $this->LeaveRecordsRepository->getLeaveRecordsByDataRange(
                     $leave_start_date['year'].'-01-01',
                     $leave_start_date['year'].'-12-31'
-                );
+                )->where('user_id', $params['user_id']);
 
                 // 該假別的總時數
                 $leaved_hours = $leave_total_records->where('type', $params['type'])->sum('hours');
@@ -380,7 +376,8 @@ class LeaveRecordsService
                 if( $params['type'] == LeaveTypesEnum::PERIOD ) {
                     $last_date_in_month = date("Y-m-t", $start_date);
                     // 當月生理假總時數
-                    $leaved_month_hours = $leave_total_records->where('type', $params['type'])
+                    $leaved_month_hours = $leave_total_records
+                        ->where('type', $params['type'])
                         ->where('start_date', '>=', $leave_start_date['year'].'-'.$leave_start_date['month'].'-01')
                         ->where('end_date', '<=', $last_date_in_month)
                         ->sum('hours');
@@ -393,6 +390,7 @@ class LeaveRecordsService
                     }
                     // 計算整年度生理假天數
                     $leaved_period_hours = $leave_total_records
+                        ->where('type', $params['type'])
                         ->where('start_date', '>=', $leave_start_date['year'].'-01-01')
                         ->where('end_date', '<=', $leave_start_date['year'].'-12-31')
                         ->sum('hours');

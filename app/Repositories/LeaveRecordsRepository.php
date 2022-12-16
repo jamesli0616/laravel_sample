@@ -16,7 +16,7 @@ class LeaveRecordsRepository
         $this->model = $LeaveRecords;
     }
 
-    // 取得所有請假紀錄指定日期範圍
+    // 取得指定日期範圍所有請假紀錄
     public function getLeaveRecordsByDataRange(string $start_date = '1970-01-01', string $end_date = '2038-01-19')
     {
         return $this->model->join('users', 'user_id', '=', 'users.id')->where(function ($query) use ($start_date, $end_date) {
@@ -28,24 +28,6 @@ class LeaveRecordsRepository
         })->orWhere(function ($query) use ($start_date, $end_date) {
             $query->where('start_date', '>', $start_date);
             $query->where('end_date', '<', $end_date);
-        })->get();
-    }
-
-    // 取得所有請假紀錄指定日期範圍 by user id
-    public function getLeaveRecordsByDataRangeAndUserID(int $user_id, string $start_date = '1970-01-01', string $end_date = '2038-01-19')
-    {
-        return $this->model->where(function ($query) use ($start_date, $end_date, $user_id) {
-            $query->where('start_date', '<', $start_date);
-            $query->where('end_date', '>', $start_date);
-            $query->where('user_id', $user_id);
-        })->orWhere(function ($query) use ($start_date, $end_date, $user_id) {
-            $query->where('start_date', '<', $end_date);
-            $query->where('end_date', '>', $end_date);
-            $query->where('user_id', $user_id);
-        })->orWhere(function ($query) use ($start_date, $end_date, $user_id) {
-            $query->where('start_date', '>', $start_date);
-            $query->where('end_date', '<', $end_date);
-            $query->where('user_id', $user_id);
         })->get();
     }
 
