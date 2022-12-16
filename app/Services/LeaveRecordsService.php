@@ -120,20 +120,17 @@ class LeaveRecordsService
             return LeaveLimitEnum::SIMPLE;
         case LeaveTypesEnum::PERIOD:
             return LeaveLimitEnum::PERIOD;
-        case LeaveTypesEnum::FUNERAL:
-            return LeaveLimitEnum::FUNERAL;
-        case LeaveTypesEnum::INJURY:
-            return LeaveLimitEnum::INJURY;
-        case LeaveTypesEnum::MATERNITY:
-            return LeaveLimitEnum::MATERNITY;
         case LeaveTypesEnum::TOCOLYSIS:
             return LeaveLimitEnum::TOCOLYSIS;
         case LeaveTypesEnum::PATERNITY:
             return LeaveLimitEnum::PATERNITY;
         case LeaveTypesEnum::FAMILYCARE:
             return LeaveLimitEnum::FAMILYCARE;
+        case LeaveTypesEnum::MATERNITY:
         case LeaveTypesEnum::OFFICIAL:
-            return LeaveLimitEnum::OFFICIAL;
+        case LeaveTypesEnum::FUNERAL:
+        case LeaveTypesEnum::INJURY:
+            return LeaveLimitEnum::INFINITE;
         case LeaveTypesEnum::SPECIAL:
             return LeaveLimitEnum::SPECIAL;
         }
