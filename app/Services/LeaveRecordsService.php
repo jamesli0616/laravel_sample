@@ -78,6 +78,17 @@ class LeaveRecordsService
             'Minimum' => LeaveMinimumEnum::HALFDAY
         ]
     ];
+    
+    protected $LEAVE_PERIOD_DATE = [
+        LeavePeriodEnum::SIMPLEYEAR => [ // 一般年度
+            'Start_date' => '-01-01', 
+            'End_date' => '-12-31'
+        ],
+        LeavePeriodEnum::JAPANYEAR => [ // 日本年度
+            'Start_date' => '-04-01', 
+            'End_date' => '-03-31'
+        ]
+    ];
 
     protected $LeaveRecordsRepository;
     protected $CalendarRepository;
@@ -90,6 +101,14 @@ class LeaveRecordsService
         $this->LeaveRecordsRepository = $LeaveRecordsRepository;
         $this->CalendarRepository = $CalendarRepository;
 	}
+
+    protected function getLeaveRecordYearByPeriod(int $year, LeavePeriodEnum $period)
+    {
+        return $this->LeaveRecordsRepository->getLeaveRecordsByDataRange(
+            $year.$this->LEAVE_PERIOD_DATE[$period],
+            $year.$this->LEAVE_PERIOD_DATE[$period]
+        );
+    }
 
     // 整理請假紀錄所有年份
     protected function distinctYears(Collection $record_results)
@@ -191,7 +210,7 @@ class LeaveRecordsService
         if ( !$isConflict->isEmpty() ) {
             throw new CreateLeaveRecordExceptions('請假日期與其他假單重疊');
         }
-
+        
         // 請假計算天數
         $leave_record_date = $this->CalendarRepository->getCalendarByDateRange(
             $params['start_date'],
@@ -232,6 +251,13 @@ class LeaveRecordsService
             throw new CreateLeaveRecordExceptions('特休假例外');
         }
 
+
+
+
+
+
+
+
         // 日本年度(目前僅特休，先列出組合)
         if( $leavePeriod == LeavePeriodEnum::JAPANYEAR ) {
             // 相同年份
@@ -263,20 +289,13 @@ class LeaveRecordsService
         } else {
             // 本筆假單跨越年度
             if( $leave_start_date['year'] != $leave_end_date['year'] ) {
-                // User當年度假別紀錄 (包含跨年度假單)
-                $leave_total_records_previous_year = $this->LeaveRecordsRepository->getLeaveRecordsByDataRange(
-                    $leave_start_date['year'].'-01-01',
-                    $leave_start_date['year'].'-12-31',
-                )->where('user_id', $params['user_id']);
-                // User下年度假別紀錄 (包含跨年度假單)
-                $leave_total_records_next_year = $this->LeaveRecordsRepository->getLeaveRecordsByDataRange(
-                    $leave_end_date['year'].'-01-01',
-                    $leave_end_date['year'].'-12-31',
-                )->where('user_id', $params['user_id']);
-
-                // 前年度假總時數
+                // User當年度假單
+                $leave_total_records_previous_year = $this->getLeaveRecordYearByPeriod($leave_start_date['year'], $leavePeriod)->where('user_id', $params['user_id']);
+                // User下年度假單
+                $leave_total_records_next_year = $this->getLeaveRecordYearByPeriod($leave_end_date['year'], $leavePeriod)->where('user_id', $params['user_id']);
+                // 前年度指定假別總時數
                 $leaved_hours_previous_year = $this->calculateLeaveHoursInYear($leave_total_records_previous_year, $params['type'], $leave_start_date['year']);
-                // 下年度假總時數
+                // 下年度指定假別總時數
                 $leaved_hours_next_year = $this->calculateLeaveHoursInYear($leave_total_records_next_year, $params['type'], $leave_end_date['year']);
 
                 // 本次請假前年度覆蓋天數
@@ -325,13 +344,9 @@ class LeaveRecordsService
                 }
             // 本筆假單同年度
             } else {
-                // User指定年內所有假單紀錄 (包含跨年度假單)
-                $leave_total_records = $this->LeaveRecordsRepository->getLeaveRecordsByDataRange(
-                    $leave_start_date['year'].'-01-01',
-                    $leave_start_date['year'].'-12-31'
-                )->where('user_id', $params['user_id']);
-
-                // 該假別年度總時數
+                // User當年度假單
+                $leave_total_records = $this->getLeaveRecordYearByPeriod($leave_start_date['year'], $leavePeriod)->where('user_id', $params['user_id']);
+                // 指定假別總時數
                 $leaved_hours = $this->calculateLeaveHoursInYear($leave_total_records, $params['type'], $leave_start_date['year']);
 
                 // 生理假 (因無法跨年度僅檢查同年度假單即可)
