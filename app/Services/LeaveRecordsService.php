@@ -242,6 +242,10 @@ class LeaveRecordsService
             throw new CreateLeaveRecordExceptions('請假期間超過兩年');
         }
 
+        if( $params['type'] == LeaveTypesEnum::SPECIAL) {
+            throw new CreateLeaveRecordExceptions('特休假例外');
+        }
+
         // 日本年度(目前僅特休，先列出組合)
         if( $leavePeriod == LeavePeriodEnum::JAPANYEAR ) {
             // 相同年份
