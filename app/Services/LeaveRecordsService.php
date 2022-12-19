@@ -117,6 +117,22 @@ class LeaveRecordsService
         return $start_years->merge($end_years)->unique('year')->toArray();
     }
 
+     // 取得所有不重複假別年度總時數
+     protected function distinctType(Collection $record_results, int $year)
+     {
+        $calendar = $this->CalendarRepository->getCalendarByDateRange();
+
+        $types = $record_results->map(function($item, $key) {
+            return ['type' => $item['type']];
+        })->unique('type')->values();
+        $leaved_hours = $types->map(function($item, $key) use ($calendar, $record_results, $year){
+            return [
+                'type' => $item['type'],
+                'hours' => $this->calculateLeaveHoursInYear($calendar, $record_results, $item['type'], $year)];
+        });
+        return $leaved_hours->toArray();
+     }
+
     // 根據計算年度取得整年的假單紀錄(預設為一般年度)
     protected function getLeaveRecordYearByPeriod(int $year, int $period = LeavePeriodEnum::SIMPLEYEAR)
     {
@@ -144,6 +160,7 @@ class LeaveRecordsService
         return [
             'leaveCalendar' =>  $leave_records,
             'leaveCalendarYears' => $this->distinctYears($leave_records),
+            'leaveHoursList' => $this->distinctType($leave_records, $year),
             'leaveRecordYear' => $year
         ];
     }

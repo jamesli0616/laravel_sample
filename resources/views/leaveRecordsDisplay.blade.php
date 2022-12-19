@@ -30,14 +30,26 @@
             <a href="{{ route('showCreateLeaveForm') }}">
                 建立假單
             </a>
-            <div class="card">
+            <div>
+                User: {{ Auth::user()->name }}
+                <table>
+                    <tr>
+                        <th>假別</th><th>{{ $leaveRecordYear }} 年累計</th>
+                    </tr>
+                    @foreach ($leaveHoursList as $rows)
+                        <tr>
+                            <td>{{ $LeaveRecordsPresenter->leaveType($rows['type']) }}</td>
+                            <td>{{ $LeaveRecordsPresenter->leaveDays($rows['hours']) }}天</td>
+                        </tr>
+                    @endforeach
+                </table>
+            </div>
+            <div>
                 @isset($response)
                     <span style="color:red;">
                         <strong>{{ $response }}</strong><br>
                     </span>
                 @endisset
-                User: {{ Auth::user()->name }}
-                Year: {{ $leaveRecordYear }}
                 <table>
                     <tr>
                         <th>起始日</th><th>起始時間</th><th>結束日</th><th>結束時間</th><th>假別</th><th>事由</th><th>時長</th><th>狀態</th>
