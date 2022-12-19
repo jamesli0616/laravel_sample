@@ -370,8 +370,9 @@ class LeaveRecordsService
             if( $isPastYear ) {
                 // 生理假檢查
                 if ( $params['type'] == LeaveTypesEnum::PERIOD ) {
+                    // 生理假含跨月(年)最多兩日，超過直接判定例外
                     if($params['hours'] > 2 * LeaveMinimumEnum::FULLDAY) {
-                        throw new CreateLeaveRecordExceptions('生假時數超過上限');
+                        throw new CreateLeaveRecordExceptions('生理假時數超過上限');
                     }
                     // 跨年即跨月，需檢查前後兩個月份
                     $this->checkPeriodOverMonthLimit($calendar, $leave_records_start_year, $params['start_date'], $past_days_start_year * LeaveMinimumEnum::FULLDAY);
@@ -403,8 +404,9 @@ class LeaveRecordsService
             } else {
                 // 生理假檢查
                 if ( $params['type'] == LeaveTypesEnum::PERIOD ) {
+                    // 生理假含跨月(年)最多兩日，超過直接判定例外
                     if($params['hours'] > 2 * LeaveMinimumEnum::FULLDAY) {
-                        throw new CreateLeaveRecordExceptions('生假時數超過上限');
+                        throw new CreateLeaveRecordExceptions('生理假時數超過上限');
                     }
                     // 跨月需檢查前後兩個月份
                     if ( $leave_start_date['month'] != $leave_end_date['month'] ) {
