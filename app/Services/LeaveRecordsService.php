@@ -155,26 +155,28 @@ class LeaveRecordsService
     }
 
     // 計算該年度的假別總時數
-    public function calculateLeaveHoursInYear(Collection $calendar, Collection $leave_records, int $type, int $year, int $period)
+    public function calculateLeaveHoursInYear(Collection $calendar, Collection $leave_records, int $type, int $year)
     {
         // 該假別總時數
         $total_hours = $leave_records->where('type', $type)->sum('hours');
         // 檢查假單紀錄，找到有前一年的紀錄，要扣除前一年時數
-        $check_past_year = $leave_records->where('type', $type)->where('start_date', '<', $year.$this->LEAVE_PERIOD_DATE[$period]['Start_date']);
+        $check_past_year = $leave_records->where('type', $type)
+            ->where('start_date', '<', $year.$this->LEAVE_PERIOD_DATE[$this->LEAVE_CONFIG_ARRAY[$type]['Period']]['Start_date']);
         if( !$check_past_year->isEmpty() ) {
             $next_year_workdays = $this->getWorkingDaysInCalendar(
                 $calendar,
                 $check_past_year->values()[0]['start_date'],
-                ($year-1).$this->LEAVE_PERIOD_DATE[$period]['End_date']
+                ($year-1).$this->LEAVE_PERIOD_DATE[$this->LEAVE_CONFIG_ARRAY[$type]['Period']]['End_date']
             );
             $total_hours -= $next_year_workdays * LeaveMinimumEnum::FULLDAY;
         }
          // 檢查假單紀錄，找到有下一年的紀錄，要扣除下一年時數
-        $check_past_year = $leave_records->where('type', $type)->where('end_date', '>', $year.$this->LEAVE_PERIOD_DATE[$period]['End_date']);
+        $check_past_year = $leave_records->where('type', $type)
+            ->where('end_date', '>', $year.$this->LEAVE_PERIOD_DATE[$this->LEAVE_CONFIG_ARRAY[$type]['Period']]['End_date']);
         if( !$check_past_year->isEmpty() ) {
             $next_year_workdays = $this->getWorkingDaysInCalendar(
                 $calendar,
-                ($year+1).$this->LEAVE_PERIOD_DATE[$period]['Start_date'],
+                ($year+1).$this->LEAVE_PERIOD_DATE[$this->LEAVE_CONFIG_ARRAY[$type]['Period']]['Start_date'],
                 $check_past_year->values()[0]['end_date']
             );
             $total_hours -= $next_year_workdays * LeaveMinimumEnum::FULLDAY;
@@ -193,6 +195,17 @@ class LeaveRecordsService
         return $willLeaveHours > $leaveLimitDays * LeaveMinimumEnum::FULLDAY;
     }
 
+    // 家庭照顧假合併事假是否超過上限
+    public function checkFamilycareOverLimit(Collection $calendar, Collection $leave_record, int $year, int $willLeaveHours)
+    {
+        // 請假起始年度事假總時數
+        $leaved_simple_start_year = $this->calculateLeaveHoursInYear($calendar, $leave_record, LeaveTypesEnum::SIMPLE, $year);
+        // 合併事假超過上限
+        if ( $this->checkIsOverLimit($leaved_simple_start_year + $willLeaveHours, LeaveTypesEnum::SIMPLE) ) {
+            throw new CreateLeaveRecordExceptions('家庭照顧假合併事假時數超過上限');
+        }
+    }
+
     public function createLeaveRecords(array $params)
     {
         // 取得整份行事曆
@@ -209,7 +222,8 @@ class LeaveRecordsService
 
         // 請假起始或結束日期碰到假日
         if( $calendar->where('date', $params['start_date'])->values()[0]['holiday'] == HolidayEnum::HOLIDAY ||
-            $calendar->where('date', $params['end_date'])->values()[0]['holiday'] == HolidayEnum::HOLIDAY ) {
+            $calendar->where('date', $params['end_date'])->values()[0]['holiday'] == HolidayEnum::HOLIDAY 
+        ) {
             throw new CreateLeaveRecordExceptions('請假起始或結束日為假日');
         }
 
@@ -220,7 +234,8 @@ class LeaveRecordsService
                 $params['start_hour'],
                 $params['end_hour'],
                 $params['user_id']
-            )->isEmpty() ) {
+            )->isEmpty()
+        ) {
             throw new CreateLeaveRecordExceptions('請假日期與其他假單重疊');
         }
 
@@ -249,13 +264,13 @@ class LeaveRecordsService
             // 請假起始年度假單
             $leave_records_start_year = $this->getLeaveRecordYearByPeriod($leave_start_date['year'], $leavePeriod)->where('user_id', $params['user_id']);
             // 請假起始年度指定假別總時數
-            $leaved_hours_start_year = $this->calculateLeaveHoursInYear($calendar, $leave_records_start_year, $params['type'], $leave_start_date['year'], $leavePeriod);
+            $leaved_hours_start_year = $this->calculateLeaveHoursInYear($calendar, $leave_records_start_year, $params['type'], $leave_start_date['year']);
             // 假單跨年度時要另外考慮結束年度
             if( $isPastYear ) {
                 // 請假結束年度假單
                 $leave_records_end_year = $this->getLeaveRecordYearByPeriod($leave_end_date['year'], $leavePeriod)->where('user_id', $params['user_id']);
                 // 請假結束年度指定假別總時數
-                $leaved_hours_end_year = $this->calculateLeaveHoursInYear($calendar, $leave_records_end_year, $params['type'], $leave_end_date['year'], $leavePeriod);
+                $leaved_hours_end_year = $this->calculateLeaveHoursInYear($calendar, $leave_records_end_year, $params['type'], $leave_end_date['year']);
                 // 前年覆蓋天數
                 $past_days_start_year = $this->getWorkingDaysInCalendar(
                     $calendar,
@@ -280,8 +295,16 @@ class LeaveRecordsService
             // 休假總天數轉為休假總時數
             $params['hours'] = $willLeaveDays * LeaveMinimumEnum::FULLDAY;
 
+
             // 假單跨年度前後年分開判斷上限
             if( $isPastYear ) {
+                // 家庭照顧假檢查
+                if ( $params['type'] == LeaveTypesEnum::FAMILYCARE ) {
+                    // 起始年度
+                    $this->checkFamilycareOverLimit($calendar, $leave_records_start_year, $leave_start_date['year'], $past_days_start_year * LeaveMinimumEnum::FULLDAY);
+                    // 結束年度
+                    $this->checkFamilycareOverLimit($calendar, $leave_records_end_year, $leave_end_date['year'], $past_days_end_year * LeaveMinimumEnum::FULLDAY);
+                }
                 // 請假時數超過上限 (假單跨年，前後年獨立檢查)
                 if( $this->checkIsOverLimit($leaved_hours_start_year + $past_days_start_year * LeaveMinimumEnum::FULLDAY, $params['type']) ||
                     $this->checkIsOverLimit($leaved_hours_end_year + $past_days_end_year * LeaveMinimumEnum::FULLDAY, $params['type']) ) {
@@ -293,6 +316,10 @@ class LeaveRecordsService
                     }
                 }
             } else {
+                // 家庭照顧假檢查
+                if ( $params['type'] == LeaveTypesEnum::FAMILYCARE ) {
+                    $this->checkFamilycareOverLimit($calendar, $leave_records_start_year, $leave_start_date['year'], $params['hours']);
+                }
                 // 請假時數超過上限
                 if( $this->checkIsOverLimit($leaved_hours_start_year + $params['hours'], $params['type']) ) {
                     //超過上限要標示的假別
