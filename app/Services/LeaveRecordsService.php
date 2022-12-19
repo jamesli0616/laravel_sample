@@ -239,12 +239,8 @@ class LeaveRecordsService
             throw new CreateLeaveRecordExceptions('請假日期與其他假單重疊');
         }
 
-        // 請假假別時數上限(天)
-        $leaveLimitDays = $this->LEAVE_CONFIG_ARRAY[$params['type']]['Limit'];
         // 請假假別運算年度
         $leavePeriod = $this->LEAVE_CONFIG_ARRAY[$params['type']]['Period'];
-        // 請假假別時數最小單位
-        $leaveMinimum = $this->LEAVE_CONFIG_ARRAY[$params['type']]['Minimum'];
 
         // 特休與日本年度例外
         if( $leavePeriod == LeavePeriodEnum::JAPANYEAR || $params['type'] == LeaveTypesEnum::SPECIAL) {
@@ -295,9 +291,12 @@ class LeaveRecordsService
             // 休假總天數轉為休假總時數
             $params['hours'] = $willLeaveDays * LeaveMinimumEnum::FULLDAY;
 
-
             // 假單跨年度前後年分開判斷上限
             if( $isPastYear ) {
+                // 生理假檢查
+                if ( $params['type'] == LeaveTypesEnum::PERIOD ) {
+                    
+                }
                 // 家庭照顧假檢查
                 if ( $params['type'] == LeaveTypesEnum::FAMILYCARE ) {
                     // 起始年度
@@ -316,6 +315,10 @@ class LeaveRecordsService
                     }
                 }
             } else {
+                // 生理假檢查
+                if ( $params['type'] == LeaveTypesEnum::PERIOD ) {
+                    
+                }
                 // 家庭照顧假檢查
                 if ( $params['type'] == LeaveTypesEnum::FAMILYCARE ) {
                     $this->checkFamilycareOverLimit($calendar, $leave_records_start_year, $leave_start_date['year'], $params['hours']);
