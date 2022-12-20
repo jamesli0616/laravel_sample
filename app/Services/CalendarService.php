@@ -32,7 +32,8 @@ class CalendarService
                 $year.'-01-01',
                 $year.'-12-31'
             ),
-            'calendarYears' => $this->distinctYears($this->CalendarRepository->getCalendarByDateRange())
+            'calendarYears' => $this->distinctYears($this->CalendarRepository->getCalendarByDateRange()),
+            'month' => 0
         ];
     }
     

@@ -24,12 +24,13 @@
             <a href="{{ route('home') }}">
                 首頁
             </a>
-            <br>
+            <br><br>
             @foreach ($leaveCalendarYears as $rows)
                 <a href="{{ route('showLeaveCalendarAdmin', $rows['year']) }}">
                     {{ $rows['year'] }}
                 </a>/
             @endforeach
+            <br><br>
             <div id="validLeaveRecord_form" style="z-index: 1;position: fixed;margin-left:600px;border:solid;padding:3px;display:none;">
                 <form action="{{ route('validLeaveRecordAdmin') }}" method="post">
                     @csrf
@@ -66,7 +67,6 @@
                 @endforeach
             </div>
             <div class="card">
-                Year: {{ $leaveRecordYear }}
                 <table>
                     <tr>
                         <th>User</th><th>起始日</th><th>起始時間</th><th>結束日</th><th>結束時間</th><th>假別</th><th>事由</th><th>時長</th><th>狀態</th>
@@ -99,8 +99,8 @@
     {
         let setId = $(element).attr('id');
         let setName = $(element).find('td').eq(0).text();
-        let setStartTime = $(element).find('td').eq(1).text()+' '+$(element).find('td').eq(2).text();
-        let setEndTime = $(element).find('td').eq(3).text()+' '+$(element).find('td').eq(4).text();
+        let setStartTime = {{ $leaveRecordYear }}+' '+$(element).find('td').eq(1).text()+' '+$(element).find('td').eq(2).text();
+        let setEndTime = {{ $leaveRecordYear }}+' '+$(element).find('td').eq(3).text()+' '+$(element).find('td').eq(4).text();
         let setType = $(element).find('td').eq(5).text();
         let setHours = $(element).find('td').eq(7).text();
         $('input[name=\'leave_id\']').val(setId);

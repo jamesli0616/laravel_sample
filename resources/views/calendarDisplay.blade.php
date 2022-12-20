@@ -65,16 +65,10 @@
             @endif
             <div class="card">
                 <table>
-                    @php 
-                        $month = 0
-                    @endphp
                     @foreach ($calendarDate as $rows)
                         @if($month != date('m', strtotime($rows['date'])))
-                            @php 
-                                $month++
-                            @endphp
                             <tr>
-                                <th colspan="7">{{ $month }}月</th>
+                                <th colspan="7">{{ ++$month }}月</th>
                             </tr>
                             <tr>
                                 <th>日</th><th>一</th><th>二</th><th>三</th><th>四</th><th>五</th><th>六</th>

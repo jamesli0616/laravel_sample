@@ -28,7 +28,7 @@ class LeaveRecordsRepository
         })->orWhere(function ($query) use ($start_date, $end_date) {
             $query->where('start_date', '>', $start_date);
             $query->where('end_date', '<', $end_date);
-        })->get();
+        })->orderBy('start_date')->get();
     }
 
     // 建立請假紀錄

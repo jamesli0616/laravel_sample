@@ -20,21 +20,21 @@
         <div class="col-md-8">
             <a href="{{ route('showCalendar', DATE('Y')) }}">
                 行事曆
+            </a>/
+            <a href="{{ route('showCreateLeaveForm') }}">
+                建立假單
             </a>
-            <br>
+            <br><br>
             @foreach ($leaveCalendarYears as $rows)
                 <a href="{{ route('showLeaveCalendar', $rows['year']) }}">
                     {{ $rows['year'] }}
                 </a>/
             @endforeach
-            <a href="{{ route('showCreateLeaveForm') }}">
-                建立假單
-            </a>
+            <br><br>
             <div>
-                User: {{ Auth::user()->name }}
                 <table>
                     <tr>
-                        <th>假別</th><th>{{ $leaveRecordYear }} 年累計</th>
+                        <th>{{ Auth::user()->name }}</th><th>{{ $leaveRecordYear }}年累計</th>
                     </tr>
                     @foreach ($leaveHoursList as $rows)
                         <tr>
@@ -44,6 +44,7 @@
                     @endforeach
                 </table>
             </div>
+            <br>
             <div>
                 @isset($response)
                     <span style="color:red;">
