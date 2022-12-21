@@ -37,6 +37,9 @@
                         <th>{{ Auth::user()->name }}</th><th>{{ $leaveRecordYear }}年累計</th>
                     </tr>
                     @foreach ($leaveHoursList as $rows)
+                        @if( $rows['hours'] == 0)
+                            @continue
+                        @endif
                         <tr>
                             <td>{{ $LeaveRecordsPresenter->leaveType($rows['type']) }}</td>
                             <td>{{ $LeaveRecordsPresenter->leaveDays($rows['hours']) }}天</td>

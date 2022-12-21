@@ -110,7 +110,7 @@ class LeaveRecordsService
         $types = $record_results->map(function($item, $key) {
             return ['type' => $item['type']];
         })->unique('type')->values();
-        $leaved_hours = $types->map(function($item, $key) use ($record_results, $cur_date, $user_id){
+        $leaved_hours = $types->map(function($item, $key) use ($record_results, $user_id, $cur_date){
             return [
                 'type' => $item['type'],
                 'hours' => $this->getUserLeavedHoursByTypeAndDateRange($user_id, $item['type'], $this->getPeriodYearDate($cur_date, $item['type']))];
@@ -185,13 +185,6 @@ class LeaveRecordsService
         return $total_hours;
     }
 
-    // 取得User指定區間的假別總時數
-    public function getUserLeavedHoursByTypeAndDateRange(int $user_id, int $type, Collection $calculateDateRange)
-    {
-        $leave_records = $this->getLeaveRecordsByDataRange($calculateDateRange)->where('user_id', $user_id);
-        return $this->calculateLeaveHoursByDateRange($leave_records, $calculateDateRange, $type);
-    }
-
     // 判斷休假時數是否超過假別上限
     public function checkIsOverLimit(int $willLeaveHours, int $type)
     {
@@ -202,7 +195,7 @@ class LeaveRecordsService
         return $willLeaveHours > $leaveLimitDays * LeaveMinimumEnum::FULLDAY;
     }
 
-    // 根據日期取得計算年度起始結束日
+    // 根據日期取得假別計算年度起始結束日
     public function getPeriodYearDate(string $date, int $type, bool $isDefault = false)
     {
         $parse_date = date_parse($date);
@@ -250,6 +243,13 @@ class LeaveRecordsService
         return new Collection([ "Hours" => $workDayHours, "Pre_Hours" => $workDayHours_preYear]);
     }
 
+    // 取得User指定區間的假別總時數
+    public function getUserLeavedHoursByTypeAndDateRange(int $user_id, int $type, Collection $calculateDateRange)
+    {
+        $leave_records = $this->getLeaveRecordsByDataRange($calculateDateRange)->where('user_id', $user_id);
+        return $this->calculateLeaveHoursByDateRange($leave_records, $calculateDateRange, $type);
+    }
+
     public function createLeaveRecords(array $params)
     {
         $calendar = $this->CalendarRepository->getCalendarByDateRange();
@@ -284,9 +284,32 @@ class LeaveRecordsService
         // 取得請假與起始結束年度該假別的總時數
         $leavedHours = $this->getUserLeavedHoursByTypeAndDateRange($params['user_id'], $params['type'], $this->getPeriodYearDate($params['start_date'], $params['type']));
         $leavedhours_next_year = $this->getUserLeavedHoursByTypeAndDateRange($params['user_id'], $params['type'], $this->getPeriodYearDate($params['end_date'], $params['type']));
-        // 休假總時數 = 跨年前後總時數相加
+
         $params['hours'] = $workHours['Hours'] + $workHours['Pre_Hours'];
 
+
+        if ( $params['type'] == LeaveTypesEnum::FAMILYCARE ) {
+            // 取得事假與起始結束年度該假別的總時數
+            $leavedHours_simple = $this->getUserLeavedHoursByTypeAndDateRange($params['user_id'], LeaveTypesEnum::SIMPLE, $this->getPeriodYearDate($params['start_date'], LeaveTypesEnum::SIMPLE));
+            $leavedHours_simple_next_year = $this->getUserLeavedHoursByTypeAndDateRange($params['user_id'], LeaveTypesEnum::SIMPLE, $this->getPeriodYearDate($params['end_date'], LeaveTypesEnum::SIMPLE));
+
+            if ( $this->checkIsOverLimit($leavedHours + $workHours['Pre_Hours'] + $leavedHours_simple, LeaveTypesEnum::SIMPLE) ||     // 前一年
+                $this->checkIsOverLimit($leavedhours_next_year + $workHours['Hours'] + $leavedHours_simple_next_year, LeaveTypesEnum::SIMPLE)  // 後一年 or 未跨年
+            ) {
+                throw new CreateLeaveRecordExceptions('合併事假時數超過上限');
+            }
+        }
+
+        if ( $this->checkIsOverLimit($leavedHours + $workHours['Pre_Hours'], $params['type']) ||     // 前一年
+            $this->checkIsOverLimit($leavedhours_next_year + $workHours['Hours'], $params['type'])  // 後一年 or 未跨年
+        ) {
+            if( $params['type'] == LeaveTypesEnum::TOCOLYSIS || $params['type'] == LeaveTypesEnum::SICK ) {
+                $params['warning'] = '已超過上限';
+            } else {
+                throw new CreateLeaveRecordExceptions('請假時數超過上限');
+            }
+        }
+        
         $this->LeaveRecordsRepository->createLeaveRecords($params);
 
         return [ 'status' => 0, 'message' => '建立成功'];
