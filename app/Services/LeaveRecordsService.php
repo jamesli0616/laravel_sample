@@ -156,7 +156,7 @@ class LeaveRecordsService
     public function calculateLeaveHoursByDateRange(Collection $leave_records, Collection $calculateDateRange, int $type)
     {
         $total_hours = $leave_records->where('type', $type)->sum('hours');
-        // 檢查假單找到前一年的紀錄，要扣除前一年時數
+        // 檢查假單移除小於區間範圍的時數
         $check_past_year = $leave_records->where('type', $type)->where('start_date', '<', $calculateDateRange['Start_date']);
         if( !$check_past_year->isEmpty() ) {
             $past_year_workdays = $this->getWorkHoursSeprateByDate(
@@ -169,7 +169,7 @@ class LeaveRecordsService
             );
             $total_hours -= $past_year_workdays['Pre_Hours'];
         }
-        // 檢查假單找到下一年的紀錄，要扣除下一年時數
+        // 檢查假單移除大於區間範圍的時數
         $check_past_year = $leave_records->where('type', $type)->where('end_date', '>', $calculateDateRange['End_date']);
         if( !$check_past_year->isEmpty() ) {
             $past_year_workdays = $this->getWorkHoursSeprateByDate(
@@ -262,14 +262,7 @@ class LeaveRecordsService
             throw new CreateLeaveRecordExceptions('請假起始或結束日為假日');
         }
         // 請假時間重疊其他假單判斷
-        if ( !$this->LeaveRecordsRepository->getLeaveRecordConflict(
-                $params['start_date'],
-                $params['end_date'],
-                $params['start_hour'],
-                $params['end_hour'],
-                $params['user_id']
-            )->isEmpty()
-        ) {
+        if ( !$this->LeaveRecordsRepository->getLeaveRecordConflict($params)->isEmpty()) {
             throw new CreateLeaveRecordExceptions('請假日期與其他假單重疊');
         }
         // 取得本次請假時數
@@ -281,15 +274,14 @@ class LeaveRecordsService
             $params['type'],
             $this->getPeriodYearDate($params['start_date'], $params['type'])['End_date']
         );
-        // 取得請假與起始結束年度該假別的總時數
+        // 取得請假起始與結束年度該假別的總時數
         $leavedHours = $this->getUserLeavedHoursByTypeAndDateRange($params['user_id'], $params['type'], $this->getPeriodYearDate($params['start_date'], $params['type']));
         $leavedhours_next_year = $this->getUserLeavedHoursByTypeAndDateRange($params['user_id'], $params['type'], $this->getPeriodYearDate($params['end_date'], $params['type']));
 
         $params['hours'] = $workHours['Hours'] + $workHours['Pre_Hours'];
 
-
         if ( $params['type'] == LeaveTypesEnum::FAMILYCARE ) {
-            // 取得事假與起始結束年度該假別的總時數
+            // 取得事假起始與結束年度該假別的總時數
             $leavedHours_simple = $this->getUserLeavedHoursByTypeAndDateRange($params['user_id'], LeaveTypesEnum::SIMPLE, $this->getPeriodYearDate($params['start_date'], LeaveTypesEnum::SIMPLE));
             $leavedHours_simple_next_year = $this->getUserLeavedHoursByTypeAndDateRange($params['user_id'], LeaveTypesEnum::SIMPLE, $this->getPeriodYearDate($params['end_date'], LeaveTypesEnum::SIMPLE));
 
@@ -317,7 +309,7 @@ class LeaveRecordsService
 
     public function updateLeaveRecord(array $params)
     {
-        $this->LeaveRecordsRepository->updateLeaveRecord($params['leave_id'], $params['valid_status']);
+        $this->LeaveRecordsRepository->updateLeaveRecord($params);
 
         return [ 'status' => 0, 'message' => '修改假單狀態完成'];
     }
