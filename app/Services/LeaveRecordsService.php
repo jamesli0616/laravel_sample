@@ -302,17 +302,6 @@ class LeaveRecordsService
         $leavedhours_next_year = $this->getUserLeavedHoursByTypeAndYear($params['user_id'], $params['type'], $calculateDateRange_end);
         // 休假總時數 = 跨年前後總時數相加
         $params['hours'] = $willLeaveHours + $willLeaveHours_pre_year;
-        // 本次請假跨年度
-        if ($leavedHours_pre_year != $leavedhours) {
-
-        }
-
-
-
-        if ( $this->checkIsOverLimit($willLeaveHours + $leaved_hours_year, $params['type']) )
-        {
-            throw new CreateLeaveRecordExceptions('該假別時數超過上限');
-        }
 
 
 

@@ -17,7 +17,7 @@ class LeaveRecordsPresenter
         case LeaveTypesEnum::OFFICIAL:
             return '公假';
         case LeaveTypesEnum::SPECIAL:
-            return '特休';
+            return '特休(~3/31)';
         case LeaveTypesEnum::SICK:
             return '病假';
         case LeaveTypesEnum::PERIOD:

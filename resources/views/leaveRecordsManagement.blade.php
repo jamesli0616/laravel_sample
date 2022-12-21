@@ -72,7 +72,7 @@
                         <th>User</th><th>起始日</th><th>起始時間</th><th>結束日</th><th>結束時間</th><th>假別</th><th>事由</th><th>時長</th><th>狀態</th>
                     </tr>
                     @foreach ($leaveCalendar as $rows)
-                        @if(date_parse($rows['start_date'])['year'] != $leaveRecordYear)
+                        @if(date_parse($rows['start_date'])['year'] != $leaveRecordYear && date_parse($rows['end_date'])['year'] != $leaveRecordYear)
                             @continue
                         @endif
                         @if($rows['warning'] != '')

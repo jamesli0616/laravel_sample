@@ -28,5 +28,5 @@ final class LeaveLimitEnum extends Enum
     // 家庭照顧假
     const FAMILYCARE = 7;
     // 特休
-    const SPECIAL = -1;
+    const SPECIAL = 999;
 }
