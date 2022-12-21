@@ -130,7 +130,7 @@ class LeaveRecordsService
     // 取得所有假單
     public function getLeaveRecordsByYear(int $year)
     {
-        $cur_date = date("Y-m-d", strtotime($year.'-01-01'));
+        $cur_date = date("Y-m-d", strtotime($year.'-01-01')); // 預設為該年的1/1
         $leave_records = $this->getLeaveRecordsByDataRange($this->getPeriodYearDate($cur_date, LeaveTypesEnum::SIMPLE, true));
         return [
             'leaveCalendar' => $leave_records,
@@ -142,7 +142,7 @@ class LeaveRecordsService
     // 取得所有假單 by user_id
     public function getLeaveRecordsByUserID(int $user_id, int $year)
     {
-        $cur_date = date("Y-m-d", strtotime($year.'-01-01'));
+        $cur_date = date("Y-m-d", strtotime($year.'-01-01')); // 預設為該年的1/1
         $leave_records = $this->getLeaveRecordsByDataRange($this->getPeriodYearDate($cur_date, LeaveTypesEnum::SIMPLE, true))->where('user_id', $user_id);
         return [
             'leaveCalendar' =>  $leave_records,
@@ -168,7 +168,7 @@ class LeaveRecordsService
             );
             $total_hours -= $past_year_workdays['Pre_Hours'];
         }
-         // 檢查假單找到下一年的紀錄，要扣除下一年時數
+        // 檢查假單找到下一年的紀錄，要扣除下一年時數
         $check_past_year = $leave_records->where('type', $type)->where('end_date', '>', $calculateDateRange['End_date']);
         if( !$check_past_year->isEmpty() ) {
             $past_year_workdays = $this->getWorkHoursSeprateByYear(
@@ -200,7 +200,7 @@ class LeaveRecordsService
         return $willLeaveHours > $leaveLimitDays * LeaveMinimumEnum::FULLDAY;
     }
 
-    // 根據計算年度取得計算年度起始結束日
+    // 根據日期取得計算年度起始結束日
     public function getPeriodYearDate(string $date, int $type, bool $isDefault = false)
     {
         $parse_date = date_parse($date);
@@ -239,9 +239,9 @@ class LeaveRecordsService
             if ( $rows['date'] == $end_date && $end_hour == LeaveTimeEnum::MORNING ) {
                 $workDayHours -= LeaveMinimumEnum::HALFDAY;
             }
-            if ( $workHours_pre_year == 0 && strtotime($rows['date']) > strtotime($this->getPeriodYearDate($start_date, $type)['End_date']) ) {
+            if ( $workDayHours_preYear == 0 && strtotime($rows['date']) > strtotime($this->getPeriodYearDate($start_date, $type)['End_date']) ) {
                 // 時間超過起始日結算的最後一日表示跨年，先結算前年度總時數
-                $workDayHours_preYear = $workHours;
+                $workDayHours_preYear = $workDayHours;
                 $workDayHours = 0;
             }
             $workDayHours += LeaveMinimumEnum::FULLDAY;
