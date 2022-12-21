@@ -152,42 +152,44 @@ class LeaveRecordsService
         ];
     }
 
-    // 計算該年度的假別總時數
-    public function calculateLeaveHoursInYear(Collection $leave_records, Collection $calculateDateRange, int $type)
+    // 計算指定範圍的假別總時數
+    public function calculateLeaveHoursByDateRange(Collection $leave_records, Collection $calculateDateRange, int $type)
     {
         $total_hours = $leave_records->where('type', $type)->sum('hours');
         // 檢查假單找到前一年的紀錄，要扣除前一年時數
         $check_past_year = $leave_records->where('type', $type)->where('start_date', '<', $calculateDateRange['Start_date']);
         if( !$check_past_year->isEmpty() ) {
-            $past_year_workdays = $this->getWorkHoursSeprateByYear(
+            $past_year_workdays = $this->getWorkHoursSeprateByDate(
                 $check_past_year->values()[0]['start_date'],
                 $calculateDateRange['End_date'],
                 $check_past_year->values()[0]['start_hour'],
                 LeaveTimeEnum::AFTERNOON,
-                $type
+                $type,
+                $calculateDateRange['Start_date']
             );
             $total_hours -= $past_year_workdays['Pre_Hours'];
         }
         // 檢查假單找到下一年的紀錄，要扣除下一年時數
         $check_past_year = $leave_records->where('type', $type)->where('end_date', '>', $calculateDateRange['End_date']);
         if( !$check_past_year->isEmpty() ) {
-            $past_year_workdays = $this->getWorkHoursSeprateByYear(
+            $past_year_workdays = $this->getWorkHoursSeprateByDate(
                 $calculateDateRange['Start_date'],
                 $check_past_year->values()[0]['end_date'],
                 LeaveTimeEnum::MORNING,
                 $check_past_year->values()[0]['end_hour'],
-                $type
+                $type,
+                $calculateDateRange['End_date']
             );
             $total_hours -= $past_year_workdays['Hours'];
         }
         return $total_hours;
     }
 
-    // 取得User年度的假別總時數
+    // 取得User指定區間的假別總時數
     public function getUserLeavedHoursByTypeAndDateRange(int $user_id, int $type, Collection $calculateDateRange)
     {
         $leave_records = $this->getLeaveRecordsByDataRange($calculateDateRange)->where('user_id', $user_id);
-        return $this->calculateLeaveHoursInYear($leave_records, $calculateDateRange, $type);
+        return $this->calculateLeaveHoursByDateRange($leave_records, $calculateDateRange, $type);
     }
 
     // 判斷休假時數是否超過假別上限
@@ -221,8 +223,8 @@ class LeaveRecordsService
         }
     }
 
-    // 取得工作天時數 (當跨年度分開時數)
-    public function getWorkHoursSeprateByYear(string $start_date, string $end_date, int $start_hour, int $end_hour, int $type)
+    // 指定跨越日期取得分開工作天時數
+    public function getWorkHoursSeprateByDate(string $start_date, string $end_date, int $start_hour, int $end_hour, int $type, string $past_year_date)
     {
         $calendar = $this->CalendarRepository->getCalendarByDateRange();
         $leavePeriod = $this->LEAVE_CONFIG_ARRAY[$type]['Period'];
@@ -230,7 +232,6 @@ class LeaveRecordsService
 
         $workDayHours = 0;
         $workDayHours_preYear = 0;
-
         foreach ($leave_date_range as $rows) {
             if ($rows['holiday'] == HolidayEnum::HOLIDAY) continue;
             if ( $rows['date'] == $start_date && $start_hour == LeaveTimeEnum::AFTERNOON ) {
@@ -239,8 +240,8 @@ class LeaveRecordsService
             if ( $rows['date'] == $end_date && $end_hour == LeaveTimeEnum::MORNING ) {
                 $workDayHours -= LeaveMinimumEnum::HALFDAY;
             }
-            if ( $workDayHours_preYear == 0 && strtotime($rows['date']) > strtotime($this->getPeriodYearDate($start_date, $type)['End_date']) ) {
-                // 時間超過起始日結算的最後一日表示跨年，先結算前年度總時數
+            if ( $workDayHours_preYear == 0 && strtotime($rows['date']) > strtotime($past_year_date) ) {
+                // 時間跨越指定日先結算跨越前總時數
                 $workDayHours_preYear = $workDayHours;
                 $workDayHours = 0;
             }
@@ -272,23 +273,19 @@ class LeaveRecordsService
             throw new CreateLeaveRecordExceptions('請假日期與其他假單重疊');
         }
         // 取得本次請假時數
-        $workHours = $this->getWorkHoursSeprateByYear(
+        $workHours = $this->getWorkHoursSeprateByDate(
             $params['start_date'],
             $params['end_date'],
             $params['start_hour'],
             $params['end_hour'],
-            $params['type']
+            $params['type'],
+            $this->getPeriodYearDate($params['start_date'], $params['type'])['End_date']
         );
-        $willLeaveHours_pre_year = $workHours['Pre_Hours'];
-        $willLeaveHours = $workHours['Hours'];
-        // 取得請假起始與結束日年度的計算日期
-        $calculateDateRange_start = $this->getPeriodYearDate($params['start_date'], $params['type']);
-        $calculateDateRange_end = $this->getPeriodYearDate($params['end_date'], $params['type']);
         // 取得請假與起始結束年度該假別的總時數
-        $leavedHours = $this->getUserLeavedHoursByTypeAndDateRange($params['user_id'], $params['type'], $calculateDateRange_start);
-        $leavedhours_next_year = $this->getUserLeavedHoursByTypeAndDateRange($params['user_id'], $params['type'], $calculateDateRange_end);
+        $leavedHours = $this->getUserLeavedHoursByTypeAndDateRange($params['user_id'], $params['type'], $this->getPeriodYearDate($params['start_date'], $params['type']));
+        $leavedhours_next_year = $this->getUserLeavedHoursByTypeAndDateRange($params['user_id'], $params['type'], $this->getPeriodYearDate($params['end_date'], $params['type']));
         // 休假總時數 = 跨年前後總時數相加
-        $params['hours'] = $willLeaveHours + $willLeaveHours_pre_year;
+        $params['hours'] = $workHours['Hours'] + $workHours['Pre_Hours'];
 
         $this->LeaveRecordsRepository->createLeaveRecords($params);
 
