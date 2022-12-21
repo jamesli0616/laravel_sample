@@ -132,8 +132,8 @@ class LeaveRecordsService
     // 取得所有假單
     public function getLeaveRecordsByYear(int $year)
     {
-        $cur_date = date("Y-01-01", strtotime($year.'-01-01'));
-        $leave_records = $this->getLeaveRecordYearByPeriod($this->getPeriodYearDate($cur_date, 0, true));
+        $cur_date = date("Y-m-d", strtotime($year.'-01-01'));
+        $leave_records = $this->getLeaveRecordYearByPeriod($this->getPeriodYearDate($cur_date, LeaveTypesEnum::SIMPLE, true));
         return [
             'leaveCalendar' => $leave_records,
             'leaveCalendarYears' => $this->distinctYears($leave_records),
@@ -144,8 +144,8 @@ class LeaveRecordsService
     // 取得所有假單 by user_id
     public function getLeaveRecordsByUserID(int $user_id, int $year)
     {
-        $cur_date = date("Y-01-01", strtotime($year.'-01-01'));
-        $leave_records = $this->getLeaveRecordYearByPeriod($this->getPeriodYearDate($cur_date, 0, true))->where('user_id', $user_id);
+        $cur_date = date("Y-m-d", strtotime($year.'-01-01'));
+        $leave_records = $this->getLeaveRecordYearByPeriod($this->getPeriodYearDate($cur_date, LeaveTypesEnum::SIMPLE, true))->where('user_id', $user_id);
         return [
             'leaveCalendar' =>  $leave_records,
             'leaveCalendarYears' => $this->distinctYears($leave_records),
@@ -220,7 +220,9 @@ class LeaveRecordsService
     {
         $parse_date = date_parse($date);
         // 預設回傳一般年度計算區間
-        if($isDefault) return new Collection(['Start_date' => $parse_date['year'].'-01-01', 'End_date' => $parse_date['year'].'-12-31']);
+        if($isDefault) {
+            return new Collection(['Start_date' => ($parse_date['year']-1).'-01-01', 'End_date' => ($parse_date['year']+1).'-12-31']);
+        }
         // 計算年度
         $leavePeriod = $this->LEAVE_CONFIG_ARRAY[$type]['Period'];
         switch($leavePeriod) {
@@ -323,7 +325,7 @@ class LeaveRecordsService
         // 休假總時數 = 跨年前後總時數相加
         $params['hours'] = $willLeaveHours + $willLeaveHours_pre_year;
         $this->LeaveRecordsRepository->createLeaveRecords($params);
-        
+
         return [
             'status' => 0,
             'message' => '建立成功'
