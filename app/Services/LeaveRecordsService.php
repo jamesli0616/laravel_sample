@@ -216,11 +216,11 @@ class LeaveRecordsService
     {
         $leaved_hours = $leave_records->where('type', $type)->sum('hours');
         // 找出日期區間外的假單
-        $leave_records = $leave_records->where('type', $type)->filter(function ($item) use ($calculateDateRange) {
+        $leave_records_fliter = $leave_records->where('type', $type)->filter(function ($item) use ($calculateDateRange) {
             return $item['start_date'] < $calculateDateRange['Start_date'] || $item['end_date'] > $calculateDateRange['End_date'];
         });
-        // 扣除不再此範圍內的時數
-        foreach ($leave_records as $rows) {
+        // 扣除日期區間外的時數
+        foreach ($leave_records_fliter as $rows) {
             $leaved_past_hours = $this->getWorkHoursSeprateByDateRange(
                 $rows['start_date'],
                 $rows['end_date'],
