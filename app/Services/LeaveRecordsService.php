@@ -306,7 +306,7 @@ class LeaveRecordsService
                 $params['end_date'],
                 $params['start_hour'],
                 $params['end_hour'],
-                $startMonth
+                $this->getMonthHeadTailDate($params['start_date'])
             );
             $this->checkPeriodLeaveMonthIsOverLimit($params['user_id'], $params['type'], $monthHours['Hours'], $params['start_date']);
             $this->checkPeriodLeaveMonthIsOverLimit($params['user_id'], $params['type'], $monthHours['Next_Hours'], $params['end_date']);
