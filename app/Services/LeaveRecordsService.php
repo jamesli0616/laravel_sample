@@ -113,7 +113,8 @@ class LeaveRecordsService
         $leaved_hours = $types->map(function($item, $key) use ($record_results, $user_id, $cur_date){
             return [
                 'type' => $item['type'],
-                'hours' => $this->getUserLeavedHoursByTypeAndDateRange($user_id, $item['type'], $this->getPeriodYearDate($cur_date, $item['type']))];
+                'hours' => $this->getUserLeavedHoursByTypeAndDateRange($user_id, $item['type'], $this->getPeriodYearDate($cur_date, $item['type']))
+            ];
         });
         return $leaved_hours->toArray();
     }
@@ -152,6 +153,15 @@ class LeaveRecordsService
         ];
     }
 
+    // 根據日期取得該月起始與結束日
+    public function getMonthHeadTailDate(string $date)
+    {
+        $first_date_in_month = date('Y-m-01',strtotime($date));
+        $last_date_in_month = date("Y-m-t", strtotime($date));
+
+        return new Collection(['Start_date' => $first_date_in_month, 'End_date' => $last_date_in_month]);
+    }
+
     // 根據日期取得假別計算年度起始結束日
     public function getPeriodYearDate(string $date, int $type, bool $isDefault = false)
     {
@@ -186,7 +196,7 @@ class LeaveRecordsService
                 $check_past_year->values()[0]['start_hour'],
                 $check_past_year->values()[0]['end_hour'],
                 $type,
-                date('Y-m-d',(strtotime ('-1 day', strtotime($calculateDateRange['Start_date']))))
+                date('Y-m-d',(strtotime ('-1 day', strtotime($calculateDateRange['Start_date'])))) // 範圍起始日前一日為跨越日期
             );
             $total_hours -= $past_year_workdays['Pre_Hours'];
         }
@@ -277,8 +287,27 @@ class LeaveRecordsService
         $leavedHours = $this->getUserLeavedHoursByTypeAndDateRange($params['user_id'], $params['type'], $this->getPeriodYearDate($params['start_date'], $params['type']));
         $leavedhours_next_year = $this->getUserLeavedHoursByTypeAndDateRange($params['user_id'], $params['type'], $this->getPeriodYearDate($params['end_date'], $params['type']));
 
-        $params['hours'] = $workHours['Hours'] + $workHours['Pre_Hours'];
-
+        if ( $params['type'] == LeaveTypesEnum::PERIOD ) {
+            $startMonth = $this->getMonthHeadTailDate($params['start_date']);
+            $endMonth = $this->getMonthHeadTailDate($params['end_date']);
+            // 月份時數
+            $monthHours = $this->getWorkHoursSeprateByDate(
+                $params['start_date'],
+                $params['end_date'],
+                $params['start_hour'],
+                $params['end_hour'],
+                $params['type'],
+                $startMonth['End_date']
+            );
+            // 計算起始與結束月份的生理假時數
+            $leavedMonthHours_period = $this->getUserLeavedHoursByTypeAndDateRange($params['user_id'], LeaveTypesEnum::PERIOD, $startMonth);
+            $leavedMonthHours_period_next_month = $this->getUserLeavedHoursByTypeAndDateRange($params['user_id'], LeaveTypesEnum::PERIOD, $endMonth);
+            if ( $leavedMonthHours_period + $monthHours['Pre_Hours'] > LeaveMinimumEnum::FULLDAY ||     // 前一月
+                $leavedMonthHours_period_next_month + $monthHours['Hours'] > LeaveMinimumEnum::FULLDAY  // 後一月 or 未跨月
+            ) {
+                throw new CreateLeaveRecordExceptions('生理假超過每月1日上限');
+            }
+        }
         if ( $params['type'] == LeaveTypesEnum::FAMILYCARE ) {
             // 取得事假起始與結束年度該假別的總時數
             $leavedHours_simple = $this->getUserLeavedHoursByTypeAndDateRange($params['user_id'], LeaveTypesEnum::SIMPLE, $this->getPeriodYearDate($params['start_date'], LeaveTypesEnum::SIMPLE));
@@ -296,11 +325,15 @@ class LeaveRecordsService
         ) {
             if( $params['type'] == LeaveTypesEnum::TOCOLYSIS || $params['type'] == LeaveTypesEnum::SICK ) {
                 $params['warning'] = '已超過上限';
+            } else if( $params['type'] == LeaveTypesEnum::PERIOD ) { 
+                // TODO: 生理假合併病假超過上限標示
             } else {
                 throw new CreateLeaveRecordExceptions('請假時數超過上限');
             }
         }
         
+        $params['hours'] = $workHours['Hours'] + $workHours['Pre_Hours'];
+
         $this->LeaveRecordsRepository->createLeaveRecords($params);
 
         return [ 'status' => 0, 'message' => '建立成功'];

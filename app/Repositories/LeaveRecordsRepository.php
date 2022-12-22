@@ -21,13 +21,13 @@ class LeaveRecordsRepository
     {
         return $this->model->join('users', 'user_id', '=', 'users.id')->where(function ($query) use ($start_date, $end_date) {
             $query->where('start_date', '<', $start_date);
-            $query->where('end_date', '>', $start_date);
+            $query->where('end_date', '>=', $start_date);
         })->orWhere(function ($query) use ($start_date, $end_date) {
-            $query->where('start_date', '<', $end_date);
+            $query->where('start_date', '<=', $end_date);
             $query->where('end_date', '>', $end_date);
         })->orWhere(function ($query) use ($start_date, $end_date) {
-            $query->where('start_date', '>', $start_date);
-            $query->where('end_date', '<', $end_date);
+            $query->where('start_date', '>=', $start_date);
+            $query->where('end_date', '<=', $end_date);
         })->orderBy('start_date')->get();
     }
 
