@@ -236,16 +236,16 @@ class LeaveRecordsService
         $workDayHours_preYear = 0;
         foreach ($leave_date_range as $rows) {
             if ($rows['holiday'] == HolidayEnum::HOLIDAY) continue;
+            if ( $workDayHours_preYear == 0 && strtotime($rows['date']) > strtotime($past_year_date) ) {
+                // 時間跨越指定日先結算跨越前總時數
+                $workDayHours_preYear = $workDayHours;
+                $workDayHours = 0;
+            }
             if ( $rows['date'] == $start_date && $start_hour == LeaveTimeEnum::AFTERNOON ) {
                 $workDayHours -= LeaveMinimumEnum::HALFDAY;
             }
             if ( $rows['date'] == $end_date && $end_hour == LeaveTimeEnum::MORNING ) {
                 $workDayHours -= LeaveMinimumEnum::HALFDAY;
-            }
-            if ( $workDayHours_preYear == 0 && strtotime($rows['date']) > strtotime($past_year_date) ) {
-                // 時間跨越指定日先結算跨越前總時數
-                $workDayHours_preYear = $workDayHours;
-                $workDayHours = 0;
             }
             $workDayHours += LeaveMinimumEnum::FULLDAY;
         }
