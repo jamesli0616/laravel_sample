@@ -195,7 +195,6 @@ class LeaveRecordsService
                 $check_past_year->values()[0]['end_date'],
                 $check_past_year->values()[0]['start_hour'],
                 $check_past_year->values()[0]['end_hour'],
-                $type,
                 date('Y-m-d',(strtotime ('-1 day', strtotime($calculateDateRange['Start_date'])))) // 範圍起始日前一日為跨越日期
             );
             $total_hours -= $past_year_workdays['Pre_Hours'];
@@ -208,7 +207,6 @@ class LeaveRecordsService
                 $check_past_year->values()[0]['end_date'],
                 $check_past_year->values()[0]['start_hour'],
                 $check_past_year->values()[0]['end_hour'],
-                $type,
                 $calculateDateRange['End_date']
             );
             $total_hours -= $past_year_workdays['Hours'];
@@ -227,10 +225,9 @@ class LeaveRecordsService
     }
 
     // 指定跨越日期取得分開工作天時數
-    public function getWorkHoursSeprateByDate(string $start_date, string $end_date, int $start_hour, int $end_hour, int $type, string $past_year_date)
+    public function getWorkHoursSeprateByDate(string $start_date, string $end_date, int $start_hour, int $end_hour, string $past_year_date)
     {
         $calendar = $this->CalendarRepository->getCalendarByDateRange();
-        $leavePeriod = $this->LEAVE_CONFIG_ARRAY[$type]['Period'];
         $leave_date_range = $calendar->where('date', '>=', $start_date)->where('date', '<=', $end_date)->values();
         $workDayHours = 0;
         $workDayHours_preYear = 0;
@@ -280,7 +277,6 @@ class LeaveRecordsService
             $params['end_date'],
             $params['start_hour'],
             $params['end_hour'],
-            $params['type'],
             $this->getPeriodYearDate($params['start_date'], $params['type'])['End_date']
         );
         // 取得請假起始與結束年度該假別的總時數
@@ -296,7 +292,6 @@ class LeaveRecordsService
                 $params['end_date'],
                 $params['start_hour'],
                 $params['end_hour'],
-                $params['type'],
                 $startMonth['End_date']
             );
             // 計算起始與結束月份的生理假時數
