@@ -152,49 +152,6 @@ class LeaveRecordsService
         ];
     }
 
-    // 計算指定範圍的假別總時數
-    public function calculateLeaveHoursByDateRange(Collection $leave_records, Collection $calculateDateRange, int $type)
-    {
-        $total_hours = $leave_records->where('type', $type)->sum('hours');
-        // 檢查假單移除小於區間範圍的時數
-        $check_past_year = $leave_records->where('type', $type)->where('start_date', '<', $calculateDateRange['Start_date']);
-        if( !$check_past_year->isEmpty() ) {
-            $past_year_workdays = $this->getWorkHoursSeprateByDate(
-                $check_past_year->values()[0]['start_date'],
-                $calculateDateRange['End_date'],
-                $check_past_year->values()[0]['start_hour'],
-                LeaveTimeEnum::AFTERNOON,
-                $type,
-                $calculateDateRange['Start_date']
-            );
-            $total_hours -= $past_year_workdays['Pre_Hours'];
-        }
-        // 檢查假單移除大於區間範圍的時數
-        $check_past_year = $leave_records->where('type', $type)->where('end_date', '>', $calculateDateRange['End_date']);
-        if( !$check_past_year->isEmpty() ) {
-            $past_year_workdays = $this->getWorkHoursSeprateByDate(
-                $calculateDateRange['Start_date'],
-                $check_past_year->values()[0]['end_date'],
-                LeaveTimeEnum::MORNING,
-                $check_past_year->values()[0]['end_hour'],
-                $type,
-                $calculateDateRange['End_date']
-            );
-            $total_hours -= $past_year_workdays['Hours'];
-        }
-        return $total_hours;
-    }
-
-    // 判斷休假時數是否超過假別上限
-    public function checkIsOverLimit(int $willLeaveHours, int $type)
-    {
-        $leaveLimitDays = $this->LEAVE_CONFIG_ARRAY[$type]['Limit'];
-
-        if ( $leaveLimitDays == LeaveLimitEnum::INFINITE ) return false;
-
-        return $willLeaveHours > $leaveLimitDays * LeaveMinimumEnum::FULLDAY;
-    }
-
     // 根據日期取得假別計算年度起始結束日
     public function getPeriodYearDate(string $date, int $type, bool $isDefault = false)
     {
@@ -216,13 +173,55 @@ class LeaveRecordsService
         }
     }
 
+    // 計算指定範圍的假別總時數
+    public function calculateLeaveHoursByDateRange(Collection $leave_records, Collection $calculateDateRange, int $type)
+    {
+        $total_hours = $leave_records->where('type', $type)->sum('hours');
+        // 檢查假單移除小於區間範圍的時數
+        $check_past_year = $leave_records->where('type', $type)->where('start_date', '<', $calculateDateRange['Start_date']);
+        if( !$check_past_year->isEmpty() ) {
+            $past_year_workdays = $this->getWorkHoursSeprateByDate(
+                $check_past_year->values()[0]['start_date'],
+                $check_past_year->values()[0]['end_date'],
+                $check_past_year->values()[0]['start_hour'],
+                $check_past_year->values()[0]['end_hour'],
+                $type,
+                date('Y-m-d',(strtotime ('-1 day', strtotime($calculateDateRange['Start_date']))))
+            );
+            $total_hours -= $past_year_workdays['Pre_Hours'];
+        }
+        // 檢查假單移除大於區間範圍的時數
+        $check_past_year = $leave_records->where('type', $type)->where('end_date', '>', $calculateDateRange['End_date']);
+        if( !$check_past_year->isEmpty() ) {
+            $past_year_workdays = $this->getWorkHoursSeprateByDate(
+                $check_past_year->values()[0]['start_date'],
+                $check_past_year->values()[0]['end_date'],
+                $check_past_year->values()[0]['start_hour'],
+                $check_past_year->values()[0]['end_hour'],
+                $type,
+                $calculateDateRange['End_date']
+            );
+            $total_hours -= $past_year_workdays['Hours'];
+        }
+        return $total_hours;
+    }
+
+    // 判斷休假時數是否超過假別上限
+    public function checkIsOverLimit(int $willLeaveHours, int $type)
+    {
+        $leaveLimitDays = $this->LEAVE_CONFIG_ARRAY[$type]['Limit'];
+
+        if ( $leaveLimitDays == LeaveLimitEnum::INFINITE ) return false;
+
+        return $willLeaveHours > $leaveLimitDays * LeaveMinimumEnum::FULLDAY;
+    }
+
     // 指定跨越日期取得分開工作天時數
     public function getWorkHoursSeprateByDate(string $start_date, string $end_date, int $start_hour, int $end_hour, int $type, string $past_year_date)
     {
         $calendar = $this->CalendarRepository->getCalendarByDateRange();
         $leavePeriod = $this->LEAVE_CONFIG_ARRAY[$type]['Period'];
-        $leave_date_range = $calendar->where('date', '>=', $start_date)->where('date', '<=', $end_date);
-
+        $leave_date_range = $calendar->where('date', '>=', $start_date)->where('date', '<=', $end_date)->values();
         $workDayHours = 0;
         $workDayHours_preYear = 0;
         foreach ($leave_date_range as $rows) {
