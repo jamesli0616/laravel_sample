@@ -211,9 +211,10 @@ class LeaveRecordsService
         return new Collection([ "Hours" => $workDayHours, "Pre_Hours" => $workDayHours_prePeriod, "Next_Hours" => $workDayHours_nextPeriod]);
     }
 
-    // 計算指定範圍的假別總時數
-    public function calculateLeaveHoursByDateRange(Collection $leave_records, Collection $calculateDateRange, int $type)
+    // 取得User指定區間的假別總時數
+    public function getUserLeavedHoursByTypeAndDateRange(int $user_id, int $type, Collection $calculateDateRange)
     {
+        $leave_records = $this->getLeaveRecordsByDataRange($calculateDateRange)->where('user_id', $user_id);
         $leaved_hours = $leave_records->where('type', $type)->sum('hours');
         // 找出日期區間外的假單
         $leave_records_fliter = $leave_records->where('type', $type)->filter(function ($item) use ($calculateDateRange) {
@@ -231,23 +232,6 @@ class LeaveRecordsService
             $leaved_hours -= $leaved_past_hours['Pre_Hours'] + $leaved_past_hours['Next_Hours'];
         }
         return $leaved_hours;
-    }
-
-    // 判斷休假時數是否超過假別上限
-    public function checkIsOverLimit(int $willLeaveHours, int $type)
-    {
-        $leaveLimitDays = $this->LEAVE_CONFIG_ARRAY[$type]['Limit'];
-
-        if ( $leaveLimitDays == LeaveLimitEnum::INFINITE ) return false;
-
-        return $willLeaveHours > $leaveLimitDays * LeaveMinimumEnum::FULLDAY;
-    }
-
-    // 取得User指定區間的假別總時數
-    public function getUserLeavedHoursByTypeAndDateRange(int $user_id, int $type, Collection $calculateDateRange)
-    {
-        $leave_records = $this->getLeaveRecordsByDataRange($calculateDateRange)->where('user_id', $user_id);
-        return $this->calculateLeaveHoursByDateRange($leave_records, $calculateDateRange, $type);
     }
 
     // 判斷生理假是否超過每月上限
@@ -285,7 +269,12 @@ class LeaveRecordsService
                 throw new CreateLeaveRecordExceptions('合併事假時數超過上限');
             }
         }
-        return $this->checkIsOverLimit($leavedHours + $willLeaveHours, $type);
+
+        $leaveLimitDays = $this->LEAVE_CONFIG_ARRAY[$type]['Limit'];
+
+        if ( $leaveLimitDays == LeaveLimitEnum::INFINITE ) return false;
+
+        return $willLeaveHours > $leaveLimitDays * LeaveMinimumEnum::FULLDAY;
     }
 
     public function createLeaveRecords(array $params)
