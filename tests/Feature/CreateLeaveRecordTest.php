@@ -48,7 +48,7 @@ class CreateLeaveRecordTest extends TestCase
         $fake_params['start_date'] = '2022-12-22';
         $fake_params['end_date'] = '2022-12-29';
         $response = $this->postJson(action(['App\Http\Controllers\LeaveRecordsController@create']), $fake_params);
-        $response->assertStatus(302);
+        $this->assertDatabaseHas('leave_records', ['user_id' => 1, 'start_date' => '2022-12-22']);
 
         $fake_params['start_date'] = '2022-12-16';
         $fake_params['end_date'] = '2022-12-27';
@@ -58,7 +58,7 @@ class CreateLeaveRecordTest extends TestCase
         $fake_params['start_date'] = '2022-12-30';
         $fake_params['end_date'] = '2023-01-06';
         $response = $this->postJson(action(['App\Http\Controllers\LeaveRecordsController@create']), $fake_params);
-        $response->assertStatus(302);
+        $this->assertDatabaseHas('leave_records', ['user_id' => 1, 'start_date' => '2022-12-30']);
 
         $fake_params['start_date'] = '2022-11-10';
         $fake_params['end_date'] = '2022-11-21';
@@ -68,24 +68,30 @@ class CreateLeaveRecordTest extends TestCase
         $fake_params['start_date'] = '2022-11-10';
         $fake_params['end_date'] = '2022-11-18';
         $response = $this->postJson(action(['App\Http\Controllers\LeaveRecordsController@create']), $fake_params);
-        $response->assertStatus(302);
+        $this->assertDatabaseHas('leave_records', ['user_id' => 1, 'start_date' => '2022-11-10']);
 
         $fake_params['type'] = 2;
         $fake_params['start_date'] = '2022-09-16';
         $fake_params['end_date'] = '2022-09-16';
         $response = $this->postJson(action(['App\Http\Controllers\LeaveRecordsController@create']), $fake_params);
-        $response->assertStatus(302);
+        $this->assertDatabaseHas('leave_records', ['user_id' => 1, 'start_date' => '2022-09-16']);
 
         $fake_params['type'] = 11;
         $fake_params['start_date'] = '2022-03-29';
         $fake_params['end_date'] = '2022-04-06';
         $response = $this->postJson(action(['App\Http\Controllers\LeaveRecordsController@create']), $fake_params);
-        $response->assertStatus(302);
+        $this->assertDatabaseHas('leave_records', ['user_id' => 1, 'start_date' => '2022-03-29']);
 
         $fake_params['type'] = 2;
         $fake_params['start_date'] = '2022-09-15';
         $fake_params['end_date'] = '2022-09-15';
         $response = $this->postJson(action(['App\Http\Controllers\LeaveRecordsController@create']), $fake_params);
         $this->assertEquals('生理假超過每月1日上限', $response['message']);
+
+        $fake_params['type'] = 9;
+        $fake_params['start_date'] = '2022-08-03';
+        $fake_params['end_date'] = '2022-08-03';
+        $response = $this->postJson(action(['App\Http\Controllers\LeaveRecordsController@create']), $fake_params);
+        $this->assertEquals('合併事假時數超過上限', $response['message']);
     }
 }
