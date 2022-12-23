@@ -250,7 +250,7 @@ class LeaveRecordsService
     {
         $calculateDateRange = $this->getPeriodYearDate($date, LeaveTypesEnum::PERIOD);
         $leavedHours = $this->getUserLeavedHoursByTypeAndDateRange($user_id, LeaveTypesEnum::PERIOD, $calculateDateRange);
-        $leavedLimit = $leavedHours + $willLeaveHours - LeaveMinimumEnum::FULLDAY * 3;
+        $leavedLimit = $leavedHours + $willLeaveHours - LeaveMinimumEnum::FULLDAY * 3; // 超過3日合併病假
         if ( $leavedLimit > 0 ) {
             if ( $this->checkLeaveYearIsOverLimit($user_id, LeaveTypesEnum::SICK, $leavedLimit, $date) )
                 return true;
