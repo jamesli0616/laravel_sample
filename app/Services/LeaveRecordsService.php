@@ -265,7 +265,7 @@ class LeaveRecordsService
         $leaveLimitDays = $this->LEAVE_CONFIG_ARRAY[$type]['Limit'];
         if($leaveLimitDays == LeaveLimitEnum::INFINITE) return false;
         if($type == LeaveTypesEnum::FAMILYCARE) {
-            if($this->checkLeaveYearIsOverLimit($userId, LeaveTypesEnum::SIMPLE, $leaveTotalHours, $willLeaveStartDate)) {
+            if($this->checkLeaveYearIsOverLimit($userId, LeaveTypesEnum::SIMPLE, $willLeaveHours, $willLeaveStartDate)) {
                 throw new CreateLeaveRecordExceptions('合併事假時數超過上限');
             }
         }
