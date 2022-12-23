@@ -269,8 +269,11 @@ class LeaveRecordsService
                 throw new CreateLeaveRecordExceptions('合併事假時數超過上限');
             }
         }
+        if($type == LeaveTypesEnum::SIMPLE) {
+            // 事假要納入家庭照顧假計算
+            $leaveTotalHours += $this->getUserLeavedHoursByTypeAndDateRange($userId, LeaveTypesEnum::FAMILYCARE, $calculateDateRange);
+        }
         if($type == LeaveTypesEnum::SICK) {
-            // 病假也要檢查生理假是否超過3天的合併規則
             $leavedPeriodHours = $this->getUserLeavedHoursByTypeAndDateRange($userId, LeaveTypesEnum::PERIOD, $calculateDateRange);
             if($leavedPeriodHours > LeaveMinimumEnum::FULLDAY * 3) {
                 $leaveTotalHours += $leavedPeriodHours - LeaveMinimumEnum::FULLDAY * 3;
