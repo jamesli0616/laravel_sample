@@ -17,12 +17,12 @@ class CalendarService
 	}
 
     // 整理Calendar所有年份
-    protected function distinctYears(Collection $record_results)
+    protected function distinctYears(Collection $calendarRecords)
     {
-        $distinct_years = $record_results->transform( function($item, $key) {
+        $allYears = $calendarRecords->transform( function($item, $key) {
             return ['year' => date_parse($item['date'])['year']];
         });
-        return $distinct_years->unique('year')->toArray();
+        return $allYears->unique('year')->toArray();
     }
 
     public function displayCalendarPage(int $year)
@@ -39,7 +39,7 @@ class CalendarService
     
     public function updateCalendarByDate(array $params)
     {
-        if ( $params['comment'] == null ) {
+        if($params['comment'] == null) {
             $params['comment'] = '';
         }
 

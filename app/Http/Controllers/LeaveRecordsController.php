@@ -53,8 +53,7 @@ class LeaveRecordsController extends Controller
         
         $response = $this->LeaveRecordsService->createLeaveRecords($params);
 
-        if($response['status'] == -1)
-        {
+        if($response['status'] == -1) {
             return back()->withErrors(['message' => $response['message']]);
         }
 

@@ -58,7 +58,7 @@ class LeaveRecordsService
             'Minimum' => LeaveMinimumEnum::HALFDAY
         ],
         LeaveTypesEnum::PRENTAL => [ // 產檢假
-            'Limit' => LeaveLimitEnum::INFINITE, 
+            'Limit' => LeaveLimitEnum::PRENTAL, 
             'Period' => LeavePeriodEnum::SIMPLEYEAR, 
             'Minimum' => LeaveMinimumEnum::HALFDAY
         ],
@@ -92,63 +92,63 @@ class LeaveRecordsService
 	}
 
     // 取得假單每一筆起始與結束日期不重複的年份
-    protected function getDistinctYears(Collection $record_results)
+    protected function getDistinctYears(Collection $leaveRecords)
     {
-        $start_years = $record_results->map(function($item, $key) {
+        $startDateAllYears = $leaveRecords->map(function($item, $key) {
             return ['year' => date_parse($item['start_date'])['year']];
         });
-        $end_years = $record_results->map(function($item, $key) {
+        $endDateAllYears = $leaveRecords->map(function($item, $key) {
             return ['year' => date_parse($item['end_date'])['year']];
         });
 
-        return $start_years->merge($end_years)->unique('year')->toArray();
+        return $startDateAllYears->merge($endDateAllYears)->unique('year')->toArray();
     }
 
     // 取得所有不重複假別年度總時數
-    protected function getDistinctTypeHours(Collection $record_results, int $user_id, string $cur_date)
+    protected function getDistinctTypeHours(Collection $leaveRecords, int $userId, string $firstDateInYear)
     {
-        $types = $record_results->map(function($item, $key) {
+        $allTypes = $leaveRecords->map(function($item, $key) {
             return ['type' => $item['type']];
         })->unique('type')->values();
-        $leaved_hours = $types->map(function($item, $key) use ($record_results, $user_id, $cur_date){
+        $leavedHours = $allTypes->map(function($item, $key) use($userId, $firstDateInYear) {
             return [
                 'type' => $item['type'],
-                'hours' => $this->getUserLeavedHoursByTypeAndDateRange($user_id, $item['type'], $this->getPeriodYearDate($cur_date, $item['type']))
+                'hours' => $this->getUserLeavedHoursByTypeAndDateRange($userId, $item['type'], $this->getPeriodYearDate($firstDateInYear, $item['type']))
             ];
         });
-        return $leaved_hours->toArray();
+        return $leavedHours->toArray();
     }
 
     // 取得指定日期區間的假單紀錄
-    protected function getLeaveRecordsByDataRange(Collection $calculateDateRange)
+    protected function getLeaveRecordsByDateRange(Collection $dateRange)
     {
-        return $this->LeaveRecordsRepository->getLeaveRecordsByDataRange(
-            $calculateDateRange['Start_date'],
-            $calculateDateRange['End_date']
+        return $this->LeaveRecordsRepository->getLeaveRecordsByDateRange(
+            $dateRange['start_date'],
+            $dateRange['end_date']
         );
     }
 
     // 取得所有假單
     public function getLeaveRecordsByYear(int $year)
     {
-        $cur_date = date("Y-m-d", strtotime($year.'-01-01')); // 預設為該年的1/1
-        $leave_records = $this->getLeaveRecordsByDataRange($this->getPeriodYearDate($cur_date, LeaveTypesEnum::SIMPLE, true));
+        $firstDateInYear = date("Y-m-d", strtotime($year.'-01-01')); // 預設為該年的1/1
+        $leaveRecords = $this->getLeaveRecordsByDateRange($this->getPeriodYearDate($firstDateInYear, LeaveTypesEnum::SIMPLE, true));
         return [
-            'leaveCalendar' => $leave_records,
-            'leaveCalendarYears' => $this->getDistinctYears($leave_records),
+            'leaveCalendar' => $leaveRecords,
+            'leaveCalendarYears' => $this->getDistinctYears($leaveRecords),
             'leaveRecordYear' => $year
         ];
     }
 
     // 取得所有假單 by user_id
-    public function getLeaveRecordsByUserID(int $user_id, int $year)
+    public function getLeaveRecordsByUserID(int $userId, int $year)
     {
-        $cur_date = date("Y-m-d", strtotime($year.'-01-01')); // 預設為該年的1/1
-        $leave_records = $this->getLeaveRecordsByDataRange($this->getPeriodYearDate($cur_date, LeaveTypesEnum::SIMPLE, true))->where('user_id', $user_id);
+        $firstDateInYear = date("Y-m-d", strtotime($year.'-01-01')); // 預設為該年的1/1
+        $leaveRecords = $this->getLeaveRecordsByDateRange($this->getPeriodYearDate($firstDateInYear, LeaveTypesEnum::SIMPLE, true))->where('user_id', $userId);
         return [
-            'leaveCalendar' =>  $leave_records,
-            'leaveCalendarYears' => $this->getDistinctYears($leave_records),
-            'leaveHoursList' => $this->getDistinctTypeHours($leave_records, $user_id, $cur_date),
+            'leaveCalendar' =>  $leaveRecords,
+            'leaveCalendarYears' => $this->getDistinctYears($leaveRecords),
+            'leaveHoursList' => $this->getDistinctTypeHours($leaveRecords, $userId, $firstDateInYear),
             'leaveRecordYear' => $year
         ];
     }
@@ -156,172 +156,175 @@ class LeaveRecordsService
     // 根據日期取得該月起始與結束日
     public function getMonthHeadTailDate(string $date)
     {
-        $first_date_in_month = date('Y-m-01',strtotime($date));
-        $last_date_in_month = date("Y-m-t", strtotime($date));
+        $firstDateInMonth = date('Y-m-01',strtotime($date));
+        $lastDateInMonth = date("Y-m-t", strtotime($date));
 
-        return new Collection(['Start_date' => $first_date_in_month, 'End_date' => $last_date_in_month]);
+        return new Collection(['start_date' => $firstDateInMonth, 'end_date' => $lastDateInMonth]);
     }
 
     // 根據日期取得假別計算年度起始結束日
     public function getPeriodYearDate(string $date, int $type, bool $isDefault = false)
     {
-        $parse_date = date_parse($date);
+        $parseDate = date_parse($date);
         $leavePeriod = $this->LEAVE_CONFIG_ARRAY[$type]['Period'];
         if($isDefault) { // 預設回傳一般年度計算區間 (+1年~-1年)
-            return new Collection(['Start_date' => ($parse_date['year']-1).'-01-01', 'End_date' => ($parse_date['year']+1).'-12-31']);
+            return new Collection(['start_date' => ($parseDate['year']-1).'-01-01', 'end_date' => ($parseDate['year']+1).'-12-31']);
         }
         switch($leavePeriod) {
         case LeavePeriodEnum::SIMPLEYEAR:
-            return new Collection(['Start_date' => $parse_date['year'].'-01-01', 'End_date' => $parse_date['year'].'-12-31']);
+            return new Collection(['start_date' => $parseDate['year'].'-01-01', 'end_date' => $parseDate['year'].'-12-31']);
         case LeavePeriodEnum::JAPANYEAR: {
-                if ( $parse_date['month'] > 3) {
-                    return new Collection(['Start_date' => $parse_date['year'].'-04-01', 'End_date' => ($parse_date['year']+1).'-03-31']);
+                if($parseDate['month'] > 3) {
+                    return new Collection(['start_date' => $parseDate['year'].'-04-01', 'end_date' => ($parseDate['year']+1).'-03-31']);
                 } else {
-                    return new Collection(['Start_date' => ($parse_date['year']-1).'-04-01', 'End_date' => $parse_date['year'].'-03-31']);
+                    return new Collection(['start_date' => ($parseDate['year']-1).'-04-01', 'end_date' => $parseDate['year'].'-03-31']);
                 }
             }
         }
     }
 
     // 指定區間取得分開工作天時數
-    public function getWorkHoursSeprateByDateRange(string $start_date, string $end_date, int $start_hour, int $end_hour, Collection $date_range)
+    public function getWorkHoursSeprateByDateRange(string $startDate, string $endDate, int $startHour, int $endHour, Collection $dateRange)
     {
-        $calendar = $this->CalendarRepository->getCalendarByDateRange();
-        $leave_date_range = $calendar->where('date', '>=', $start_date)->where('date', '<=', $end_date)->values();
-        $workDayHours_prePeriod = 0;
-        $workDayHours = 0;
-        $workDayHours_nextPeriod = 0;
-        foreach ($leave_date_range as $rows) {
-            if ($rows['holiday'] == HolidayEnum::HOLIDAY) continue;
-            if ( $rows['date'] == $start_date && $start_hour == LeaveTimeEnum::AFTERNOON ) {
-                $addDays = LeaveMinimumEnum::HALFDAY;
-            } else if ( $rows['date'] == $end_date && $end_hour == LeaveTimeEnum::MORNING ) {
-                $addDays = LeaveMinimumEnum::HALFDAY;
-            } else {
-                $addDays = LeaveMinimumEnum::FULLDAY;
+        $calendar = $this->CalendarRepository->getCalendarByDateRange($startDate, $endDate);
+        $workHoursBeforeRange = 0;
+        $workHoursInRange = 0;
+        $workHoursAfterRange = 0;
+        foreach($calendar as $rows) {
+            if($rows['holiday'] == HolidayEnum::HOLIDAY) continue;
+            if($rows['date'] == $startDate && $startHour == LeaveTimeEnum::AFTERNOON) {
+                $addHours = LeaveMinimumEnum::HALFDAY;
+            }else if($rows['date'] == $endDate && $endHour == LeaveTimeEnum::MORNING) {
+                $addHours = LeaveMinimumEnum::HALFDAY;
+            }else {
+                $addHours = LeaveMinimumEnum::FULLDAY;
             }
-            if ( strtotime($rows['date']) < strtotime($date_range['Start_date']) ) {
-                $workDayHours_prePeriod += $addDays;
-            } else if ( strtotime($rows['date']) > strtotime($date_range['End_date']) ) {
-                $workDayHours_nextPeriod += $addDays;
-            } else {
-                $workDayHours += $addDays;
+            if(strtotime($rows['date']) < strtotime($dateRange['start_date'])) {
+                $workHoursBeforeRange += $addHours;
+            }else if(strtotime($rows['date']) > strtotime($dateRange['end_date'])) {
+                $workHoursAfterRange += $addHours;
+            }else {
+                $workHoursInRange += $addHours;
             }
         }
-        return new Collection([ "Hours" => $workDayHours, "Pre_Hours" => $workDayHours_prePeriod, "Next_Hours" => $workDayHours_nextPeriod]);
+        return new Collection([ "hours" => $workHoursInRange, "before_hours" => $workHoursBeforeRange, "after_hours" => $workHoursAfterRange]);
     }
 
     // 取得User指定區間的假別總時數
-    public function getUserLeavedHoursByTypeAndDateRange(int $user_id, int $type, Collection $calculateDateRange)
+    public function getUserLeavedHoursByTypeAndDateRange(int $userId, int $type, Collection $dateRange)
     {
-        $leave_records = $this->getLeaveRecordsByDataRange($calculateDateRange)->where('user_id', $user_id);
-        $leaved_hours = $leave_records->where('type', $type)->sum('hours');
+        $leaveRecords = $this->getLeaveRecordsByDateRange($dateRange)->where('user_id', $userId);
+        $leavedHours = $leaveRecords->where('type', $type)->sum('hours');
         // 找出日期區間外的假單
-        $leave_records_fliter = $leave_records->where('type', $type)->filter(function ($item) use ($calculateDateRange) {
-            return $item['start_date'] < $calculateDateRange['Start_date'] || $item['end_date'] > $calculateDateRange['End_date'];
+        $leaveRecordsOutside = $leaveRecords->where('type', $type)->filter(function($item) use($dateRange) {
+            return $item['start_date'] < $dateRange['start_date'] || $item['end_date'] > $dateRange['end_date'];
         });
         // 扣除日期區間外的時數
-        foreach ($leave_records_fliter as $rows) {
-            $leaved_past_hours = $this->getWorkHoursSeprateByDateRange(
+        foreach($leaveRecordsOutside as $rows) {
+            $leavedOutsideRangeHours = $this->getWorkHoursSeprateByDateRange(
                 $rows['start_date'],
                 $rows['end_date'],
                 $rows['start_hour'],
                 $rows['end_hour'],
-                $calculateDateRange
+                $dateRange
             );
-            $leaved_hours -= $leaved_past_hours['Pre_Hours'] + $leaved_past_hours['Next_Hours'];
+            $leavedHours -= $leavedOutsideRangeHours['before_hours'] + $leavedOutsideRangeHours['after_hours'];
         }
-        return $leaved_hours;
+        return $leavedHours;
     }
 
     // 判斷生理假是否超過每月上限
-    public function checkPeriodLeaveMonthIsOverLimit(int $user_id, int $type, int $willLeaveHours, string $date)
+    public function checkPeriodLeaveMonthIsOverLimit(int $userId, int $type, int $willLeaveHours, string $date)
     {
         $calculateDateRange = $this->getMonthHeadTailDate($date);
-        $leavedHours = $this->getUserLeavedHoursByTypeAndDateRange($user_id, $type, $calculateDateRange);
+        $leavedHours = $this->getUserLeavedHoursByTypeAndDateRange($userId, $type, $calculateDateRange);
 
-        if ( $leavedHours + $willLeaveHours > LeaveMinimumEnum::FULLDAY ) {
+        if($leavedHours + $willLeaveHours > LeaveMinimumEnum::FULLDAY) {
             throw new CreateLeaveRecordExceptions('生理假超過每月1日上限');
         }
     }
 
     // 判斷生理假合併病假是否超過上限
-    public function checkPeriodLeaveCombineSickIsOverLimit(int $user_id, int $willLeaveHours, string $date)
+    public function checkPeriodLeaveCombineSickIsOverLimit(int $userId, int $willLeaveHours, string $willLeaveStartDate)
     {
-        $calculateDateRange = $this->getPeriodYearDate($date, LeaveTypesEnum::PERIOD);
-        $leavedHours = $this->getUserLeavedHoursByTypeAndDateRange($user_id, LeaveTypesEnum::PERIOD, $calculateDateRange);
-        $leavedLimit = $leavedHours + $willLeaveHours - LeaveMinimumEnum::FULLDAY * 3; // 超過3日合併病假
-        if ( $leavedLimit > 0 ) {
-            if ( $this->checkLeaveYearIsOverLimit($user_id, LeaveTypesEnum::SICK, $leavedLimit, $date) )
+        $calculateDateRange = $this->getPeriodYearDate($willLeaveStartDate, LeaveTypesEnum::PERIOD);
+        $leaveTotalHours = $willLeaveHours + $this->getUserLeavedHoursByTypeAndDateRange($userId, LeaveTypesEnum::PERIOD, $calculateDateRange);
+        $leavedLimitHours = $leaveTotalHours - LeaveMinimumEnum::FULLDAY * 3; // 超過3日合併病假
+        if($leavedLimitHours > 0) {
+            if($this->checkLeaveYearIsOverLimit($userId, LeaveTypesEnum::SICK, $leavedLimitHours, $willLeaveStartDate))
                 return true;
         }
         return false;
     }
 
     // 判斷整年假別加總時數是否超過上限
-    public function checkLeaveYearIsOverLimit(int $user_id, int $type, int $willLeaveHours, string $date)
+    public function checkLeaveYearIsOverLimit(int $userId, int $type, int $willLeaveHours, string $willLeaveStartDate)
     {
-        $calculateDateRange = $this->getPeriodYearDate($date, $type);
+        $calculateDateRange = $this->getPeriodYearDate($willLeaveStartDate, $type);
+        $leaveTotalHours = $willLeaveHours + $this->getUserLeavedHoursByTypeAndDateRange($userId, $type, $calculateDateRange);
         $leaveLimitDays = $this->LEAVE_CONFIG_ARRAY[$type]['Limit'];
-        if ( $leaveLimitDays == LeaveLimitEnum::INFINITE ) return false;
-        if ( $type == LeaveTypesEnum::FAMILYCARE ) {
-            if ( $this->checkLeaveYearIsOverLimit($user_id, LeaveTypesEnum::SIMPLE, $willLeaveHours, $calculateDateRange) ) {
+        if($leaveLimitDays == LeaveLimitEnum::INFINITE) return false;
+        if($type == LeaveTypesEnum::FAMILYCARE) {
+            if($this->checkLeaveYearIsOverLimit($userId, LeaveTypesEnum::SIMPLE, $leaveTotalHours, $calculateDateRange)) {
                 throw new CreateLeaveRecordExceptions('合併事假時數超過上限');
             }
         }
-        $leavedHours = $this->getUserLeavedHoursByTypeAndDateRange($user_id, $type, $calculateDateRange);
-        return ($leavedHours + $willLeaveHours) > $leaveLimitDays * LeaveMinimumEnum::FULLDAY;
+        if($type == LeaveTypesEnum::SICK) {
+            // 病假也要檢查生理假是否超過3天的合併規則
+            $leavedPeriodlHours = $this->getUserLeavedHoursByTypeAndDateRange($userId, LeaveTypesEnum::PERIOD, $calculateDateRange);
+            if($leavedPeriodlHours > LeaveMinimumEnum::FULLDAY * 3) {
+                $leaveTotalHours += $leavedPeriodlHours - LeaveMinimumEnum::FULLDAY * 3;
+            }
+        }
+        return $leaveTotalHours > $leaveLimitDays * LeaveMinimumEnum::FULLDAY;
     }
 
     public function createLeaveRecords(array $params)
     {
-        if ( strtotime($params['start_date']) > strtotime($params['end_date']) ) {
+        if(strtotime($params['start_date']) > strtotime($params['end_date'])) {
             throw new CreateLeaveRecordExceptions('起始時間大於結束時間');
         }
-        if ( !$this->LeaveRecordsRepository->getLeaveRecordConflict($params)->isEmpty() ) {
+        if(!$this->LeaveRecordsRepository->getLeaveRecordConflict($params)->isEmpty()) {
             throw new CreateLeaveRecordExceptions('請假日期與其他假單重疊');
         }
-        $calendar = $this->CalendarRepository->getCalendarByDateRange();
-        if( $calendar->where('date', $params['start_date'])->values()[0]['holiday'] == HolidayEnum::HOLIDAY ||
-            $calendar->where('date', $params['end_date'])->values()[0]['holiday'] == HolidayEnum::HOLIDAY 
-        ) {
+        $calendar = $this->CalendarRepository ->getCalendarByDateRange($params['start_date'], $params['end_date']);
+        if($calendar->first()['holiday'] != HolidayEnum::WORKING || $calendar->last()['holiday'] != HolidayEnum::WORKING) {
             throw new CreateLeaveRecordExceptions('請假起始或結束日為假日');
         }
-        // 取得本次請假區間涵蓋工作時數
-        $workHours = $this->getWorkHoursSeprateByDateRange(
+        $leaveHoursInYear = $this->getWorkHoursSeprateByDateRange(
             $params['start_date'],
             $params['end_date'],
             $params['start_hour'],
             $params['end_hour'],
             $this->getPeriodYearDate($params['start_date'], $params['type'])
         );
-        if ( $params['type'] == LeaveTypesEnum::PERIOD ) {
-            $monthHours = $this->getWorkHoursSeprateByDateRange(
+        if($params['type'] == LeaveTypesEnum::PERIOD) {
+            $leaveHoursInMonth = $this->getWorkHoursSeprateByDateRange(
                 $params['start_date'],
                 $params['end_date'],
                 $params['start_hour'],
                 $params['end_hour'],
                 $this->getMonthHeadTailDate($params['start_date'])
             );
-            $this->checkPeriodLeaveMonthIsOverLimit($params['user_id'], $params['type'], $monthHours['Hours'], $params['start_date']);      // 當月份
-            $this->checkPeriodLeaveMonthIsOverLimit($params['user_id'], $params['type'], $monthHours['Next_Hours'], $params['end_date']);   // 下月份
-            if ( $this->checkPeriodLeaveCombineSickIsOverLimit($params['user_id'], $workHours['Hours'], $params['start_date']) ||       // 當年度
-                 $this->checkPeriodLeaveCombineSickIsOverLimit($params['user_id'], $workHours['Next_Hours'], $params['end_date'])       // 下年度
+            $this->checkPeriodLeaveMonthIsOverLimit($params['user_id'], $params['type'], $leaveHoursInMonth['hours'], $params['start_date']);                                                   // 當月份
+            if($leaveHoursInMonth['after_hours'] != 0) $this->checkPeriodLeaveMonthIsOverLimit($params['user_id'], $params['type'], $leaveHoursInMonth['after_hours'], $params['end_date']);    // 下月份
+            if($this->checkPeriodLeaveCombineSickIsOverLimit($params['user_id'], $leaveHoursInYear['hours'], $params['start_date']) ||                                                          // 當年度
+                ($leaveHoursInYear['after_hours'] != 0 && $this->checkPeriodLeaveCombineSickIsOverLimit($params['user_id'], $leaveHoursInYear['after_hours'], $params['end_date']))             // 下年度
             ) {
                 $params['warning'] = '合併病假已超過上限特別標示';
             }
         }
-        if ( $this->checkLeaveYearIsOverLimit($params['user_id'], $params['type'], $workHours['Hours'], $params['start_date']) ||     // 當年度
-             $this->checkLeaveYearIsOverLimit($params['user_id'], $params['type'], $workHours['Next_Hours'], $params['end_date'])     // 下年度
+        if($this->checkLeaveYearIsOverLimit($params['user_id'], $params['type'], $leaveHoursInYear['hours'], $params['start_date']) ||                                                  // 當年度
+            ($leaveHoursInYear['after_hours'] != 0 && $this->checkLeaveYearIsOverLimit($params['user_id'], $params['type'], $leaveHoursInYear['after_hours'], $params['end_date']))     // 下年度
         ) {
-            if( $params['type'] == LeaveTypesEnum::TOCOLYSIS || $params['type'] == LeaveTypesEnum::SICK ) {
+            if($params['type'] == LeaveTypesEnum::TOCOLYSIS || $params['type'] == LeaveTypesEnum::SICK) {
                 $params['warning'] = '已超過上限特別標示';
-            } else {
+            }else {
                 throw new CreateLeaveRecordExceptions('請假時數超過上限');
             }
         }
 
-        $params['hours'] = $workHours->sum();
+        $params['hours'] = $leaveHoursInYear->sum();
 
         $this->LeaveRecordsRepository->createLeaveRecords($params);
 
