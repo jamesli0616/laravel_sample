@@ -262,19 +262,15 @@ class LeaveRecordsService
     public function checkLeaveYearIsOverLimit(int $user_id, int $type, int $willLeaveHours, string $date)
     {
         $calculateDateRange = $this->getPeriodYearDate($date, $type);
-        $leavedHours = $this->getUserLeavedHoursByTypeAndDateRange($user_id, $type, $calculateDateRange);
-
+        $leaveLimitDays = $this->LEAVE_CONFIG_ARRAY[$type]['Limit'];
+        if ( $leaveLimitDays == LeaveLimitEnum::INFINITE ) return false;
         if ( $type == LeaveTypesEnum::FAMILYCARE ) {
             if ( $this->checkLeaveYearIsOverLimit($user_id, LeaveTypesEnum::SIMPLE, $willLeaveHours, $calculateDateRange) ) {
                 throw new CreateLeaveRecordExceptions('合併事假時數超過上限');
             }
         }
-
-        $leaveLimitDays = $this->LEAVE_CONFIG_ARRAY[$type]['Limit'];
-
-        if ( $leaveLimitDays == LeaveLimitEnum::INFINITE ) return false;
-
-        return $willLeaveHours > $leaveLimitDays * LeaveMinimumEnum::FULLDAY;
+        $leavedHours = $this->getUserLeavedHoursByTypeAndDateRange($user_id, $type, $calculateDateRange);
+        return ($leavedHours + $willLeaveHours) > $leaveLimitDays * LeaveMinimumEnum::FULLDAY;
     }
 
     public function createLeaveRecords(array $params)
