@@ -93,5 +93,33 @@ class CreateLeaveRecordTest extends TestCase
         $fake_params['end_date'] = '2022-08-03';
         $response = $this->postJson(action(['App\Http\Controllers\LeaveRecordsController@create']), $fake_params);
         $this->assertEquals('合併事假時數超過上限', $response['message']);
+
+        $fake_params['type'] = 0;
+        $fake_params['start_date'] = '2022-04-07';
+        $fake_params['end_date'] = '2022-05-18';
+        $response = $this->postJson(action(['App\Http\Controllers\LeaveRecordsController@create']), $fake_params);
+        $this->assertDatabaseHas('leave_records', ['user_id' => 1, 'start_date' => '2022-04-07']);
+
+        $fake_params['type'] = 2;
+        $fake_params['start_date'] = '2022-06-16';
+        $fake_params['end_date'] = '2022-06-16';
+        $response = $this->postJson(action(['App\Http\Controllers\LeaveRecordsController@create']), $fake_params);
+        $this->assertDatabaseHas('leave_records', ['user_id' => 1, 'start_date' => '2022-06-16']);
+
+        $fake_params['type'] = 2;
+        $fake_params['start_date'] = '2022-07-19';
+        $fake_params['end_date'] = '2022-07-19';
+        $response = $this->postJson(action(['App\Http\Controllers\LeaveRecordsController@create']), $fake_params);
+        $this->assertDatabaseHas('leave_records', ['user_id' => 1, 'start_date' => '2022-07-19']);
+
+        $fake_params['type'] = 2;
+        $fake_params['start_date'] = '2022-05-24';
+        $fake_params['end_date'] = '2022-05-24';
+        $response = $this->postJson(action(['App\Http\Controllers\LeaveRecordsController@create']), $fake_params);
+        $this->assertDatabaseHas('leave_records', ['user_id' => 1, 'start_date' => '2022-05-24',
+            "warning" => '合併病假已超過上限特別標示'
+        ]);
+        
+
     }
 }

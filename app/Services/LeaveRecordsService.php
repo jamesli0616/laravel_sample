@@ -250,7 +250,7 @@ class LeaveRecordsService
         return $this->calculateLeaveHoursByDateRange($leave_records, $calculateDateRange, $type);
     }
 
-    // 判斷生理假假是否超過每月上限
+    // 判斷生理假是否超過每月上限
     public function checkPeriodLeaveMonthIsOverLimit(int $user_id, int $type, int $willLeaveHours, string $date)
     {
         $calculateDateRange = $this->getMonthHeadTailDate($date);
@@ -259,6 +259,19 @@ class LeaveRecordsService
         if ( $leavedHours + $willLeaveHours > LeaveMinimumEnum::FULLDAY ) {
             throw new CreateLeaveRecordExceptions('生理假超過每月1日上限');
         }
+    }
+
+    // 判斷生理假合併病假是否超過上限
+    public function checkPeriodLeaveCombineSickIsOverLimit(int $user_id, int $willLeaveHours, string $date)
+    {
+        $calculateDateRange = $this->getPeriodYearDate($date, LeaveTypesEnum::PERIOD);
+        $leavedHours = $this->getUserLeavedHoursByTypeAndDateRange($user_id, LeaveTypesEnum::PERIOD, $calculateDateRange);
+        $leavedLimit = $leavedHours + $willLeaveHours - LeaveMinimumEnum::FULLDAY * 3;
+        if ( $leavedLimit > 0 ) {
+            if ( $this->checkLeaveYearIsOverLimit($user_id, LeaveTypesEnum::SICK, $leavedLimit, $date) )
+                return true;
+        }
+        return false;
     }
 
     // 判斷整年假別加總時數是否超過上限
@@ -277,20 +290,19 @@ class LeaveRecordsService
 
     public function createLeaveRecords(array $params)
     {
-        $calendar = $this->CalendarRepository->getCalendarByDateRange();
         if ( strtotime($params['start_date']) > strtotime($params['end_date']) ) {
             throw new CreateLeaveRecordExceptions('起始時間大於結束時間');
         }
+        if ( !$this->LeaveRecordsRepository->getLeaveRecordConflict($params)->isEmpty() ) {
+            throw new CreateLeaveRecordExceptions('請假日期與其他假單重疊');
+        }
+        $calendar = $this->CalendarRepository->getCalendarByDateRange();
         if( $calendar->where('date', $params['start_date'])->values()[0]['holiday'] == HolidayEnum::HOLIDAY ||
             $calendar->where('date', $params['end_date'])->values()[0]['holiday'] == HolidayEnum::HOLIDAY 
         ) {
             throw new CreateLeaveRecordExceptions('請假起始或結束日為假日');
         }
-        // 請假時間重疊其他假單判斷
-        if ( !$this->LeaveRecordsRepository->getLeaveRecordConflict($params)->isEmpty()) {
-            throw new CreateLeaveRecordExceptions('請假日期與其他假單重疊');
-        }
-        // 取得本次請假時數
+        // 取得本次請假區間涵蓋工作時數
         $workHours = $this->getWorkHoursSeprateByDateRange(
             $params['start_date'],
             $params['end_date'],
@@ -298,9 +310,7 @@ class LeaveRecordsService
             $params['end_hour'],
             $this->getPeriodYearDate($params['start_date'], $params['type'])
         );
-
         if ( $params['type'] == LeaveTypesEnum::PERIOD ) {
-            // 月份時數
             $monthHours = $this->getWorkHoursSeprateByDateRange(
                 $params['start_date'],
                 $params['end_date'],
@@ -308,11 +318,14 @@ class LeaveRecordsService
                 $params['end_hour'],
                 $this->getMonthHeadTailDate($params['start_date'])
             );
-            $this->checkPeriodLeaveMonthIsOverLimit($params['user_id'], $params['type'], $monthHours['Hours'], $params['start_date']);
-            $this->checkPeriodLeaveMonthIsOverLimit($params['user_id'], $params['type'], $monthHours['Next_Hours'], $params['end_date']);
-            // TODO: 生理假超過三天合併病假計算
+            $this->checkPeriodLeaveMonthIsOverLimit($params['user_id'], $params['type'], $monthHours['Hours'], $params['start_date']);      // 當月份
+            $this->checkPeriodLeaveMonthIsOverLimit($params['user_id'], $params['type'], $monthHours['Next_Hours'], $params['end_date']);   // 下月份
+            if ( $this->checkPeriodLeaveCombineSickIsOverLimit($params['user_id'], $workHours['Hours'], $params['start_date']) ||       // 當年度
+                 $this->checkPeriodLeaveCombineSickIsOverLimit($params['user_id'], $workHours['Next_Hours'], $params['end_date'])       // 下年度
+            ) {
+                $params['warning'] = '合併病假已超過上限特別標示';
+            }
         }
-
         if ( $this->checkLeaveYearIsOverLimit($params['user_id'], $params['type'], $workHours['Hours'], $params['start_date']) ||     // 當年度
              $this->checkLeaveYearIsOverLimit($params['user_id'], $params['type'], $workHours['Next_Hours'], $params['end_date'])     // 下年度
         ) {
