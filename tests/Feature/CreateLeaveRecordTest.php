@@ -116,11 +116,6 @@ class CreateLeaveRecordTest extends TestCase
         $response = $this->postJson(action(['App\Http\Controllers\LeaveRecordsController@create']), $fakeParams);
         $this->assertEquals('生理假超過每月1日上限', $response['message']);
     }
-    // 生理假超過12日上限(年總和12日無需測試)
-    public function test_PeriodLeaveMoreThanLimit()
-    {
-        $this->assertTrue(true, true);
-    }
     // 生理假超過3日合併病假標記
     public function test_PeriodLeaveCombineSickMoreThanLimit()
     {
@@ -174,5 +169,10 @@ class CreateLeaveRecordTest extends TestCase
         $fakeParams = $this->createFakeRecords(LeaveTypesEnum::PRENTAL, '2023-01-09', '2023-01-12');
         $response = $this->postJson(action(['App\Http\Controllers\LeaveRecordsController@create']), $fakeParams);
         $this->assertEquals('請假時數超過上限', $response['message']);       
+    }
+    // 生理假超過12日上限(年總和12日無需測試)
+    public function test_PeriodLeaveMoreThanLimit()
+    {
+        $this->assertTrue(true, true);
     }
 }
