@@ -17,7 +17,7 @@ class LeaveRecordsRepository
     }
 
     // 取得指定日期範圍所有請假紀錄
-    public function getLeaveRecordsByDateRange(string $startDate = '1970-01-01', string $endDate = '2038-01-19')
+    public function getLeaveRecordsByDateRange(string $startDate, string $endDate)
     {
         return $this->model->join('users', 'user_id', '=', 'users.id')->where(function($query) use($startDate, $endDate) {
             $query->where('start_date', '<', $startDate);

@@ -25,11 +25,12 @@
                 首頁
             </a>
             <br><br>
-            @foreach ($leaveCalendarYears as $rows)
-                <a href="{{ route('showLeaveCalendarAdmin', $rows['year']) }}">
-                    {{ $rows['year'] }}
-                </a>/
-            @endforeach
+            <a href="{{ route('showLeaveCalendarAdmin', $leaveRecordYear - 1) }}">
+                {{ $leaveRecordYear - 1 }}
+            </a>/
+            <a href="{{ route('showLeaveCalendarAdmin', $leaveRecordYear + 1) }}">
+                {{ $leaveRecordYear + 1 }}
+            </a>
             <br><br>
             <div id="validLeaveRecord_form" style="z-index: 1;position: fixed;margin-left:610px;border:solid;padding:3px;display:none;">
                 <form action="{{ route('validLeaveRecordAdmin') }}" method="post">

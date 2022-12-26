@@ -25,11 +25,12 @@
                 建立假單
             </a>
             <br><br>
-            @foreach ($leaveCalendarYears as $rows)
-                <a href="{{ route('showLeaveCalendar', $rows['year']) }}">
-                    {{ $rows['year'] }}
-                </a>/
-            @endforeach
+            <a href="{{ route('showLeaveCalendar', $leaveRecordYear - 1) }}">
+                {{ $leaveRecordYear - 1 }}
+            </a>/
+            <a href="{{ route('showLeaveCalendar', $leaveRecordYear + 1) }}">
+                {{ $leaveRecordYear + 1 }}
+            </a>
             <br><br>
             <div>
                 <table>

@@ -90,20 +90,7 @@ class LeaveRecordsService
         $this->LeaveRecordsRepository = $LeaveRecordsRepository;
         $this->CalendarRepository = $CalendarRepository;
 	}
-
-    // 取得假單每一筆起始與結束日期不重複的年份
-    protected function getDistinctYears(Collection $leaveRecords)
-    {
-        $startDateAllYears = $leaveRecords->map(function($item, $key) {
-            return ['year' => date_parse($item['start_date'])['year']];
-        });
-        $endDateAllYears = $leaveRecords->map(function($item, $key) {
-            return ['year' => date_parse($item['end_date'])['year']];
-        });
-
-        return $startDateAllYears->merge($endDateAllYears)->unique('year')->toArray();
-    }
-
+    
     // 取得所有假別年度總時數
     protected function getDistinctTypeHours(Collection $leaveRecords, int $userId, string $firstDateInYear)
     {
@@ -131,11 +118,10 @@ class LeaveRecordsService
     // 取得所有假單
     public function getLeaveRecordsByYear(int $year)
     {
-        $firstDateInYear = date("Y-m-d", strtotime($year.'-01-01')); // 預設為該年的1/1
-        $leaveRecords = $this->getLeaveRecordsByDateRange($this->getYearHeadTailDate($firstDateInYear, LeaveTypesEnum::SIMPLE, true));
+        $firstDateInYear = date("Y-m-d", strtotime($year.'-01-01')); // 預設為該年的1/1，事假(一般年度)
+        $leaveRecords = $this->getLeaveRecordsByDateRange($this->getYearHeadTailDate($firstDateInYear, LeaveTypesEnum::SIMPLE));
         return [
             'leaveCalendar' => $leaveRecords,
-            'leaveCalendarYears' => $this->getDistinctYears($leaveRecords),
             'leaveRecordYear' => $year
         ];
     }
@@ -143,11 +129,10 @@ class LeaveRecordsService
     // 取得所有假單 by user_id
     public function getLeaveRecordsByUserID(int $userId, int $year)
     {
-        $firstDateInYear = date("Y-m-d", strtotime($year.'-01-01')); // 預設為該年的1/1
-        $leaveRecords = $this->getLeaveRecordsByDateRange($this->getYearHeadTailDate($firstDateInYear, LeaveTypesEnum::SIMPLE, true))->where('user_id', $userId);
+        $firstDateInYear = date("Y-m-d", strtotime($year.'-01-01')); // 預設為該年的1/1，事假(一般年度)
+        $leaveRecords = $this->getLeaveRecordsByDateRange($this->getYearHeadTailDate($firstDateInYear, LeaveTypesEnum::SIMPLE))->where('user_id', $userId);
         return [
             'leaveCalendar' =>  $leaveRecords,
-            'leaveCalendarYears' => $this->getDistinctYears($leaveRecords),
             'leaveHoursList' => $this->getDistinctTypeHours($leaveRecords, $userId, $firstDateInYear),
             'leaveRecordYear' => $year
         ];
@@ -163,12 +148,9 @@ class LeaveRecordsService
     }
 
     // 以指定日期取得假別計算年度起始結束日期
-    public function getYearHeadTailDate(string $date, int $type, bool $isDefault = false)
+    public function getYearHeadTailDate(string $date, int $type)
     {
         $parseDate = date_parse($date);
-        if($isDefault) { // 預設回傳一般年度計算區間 (+1年~-1年)
-            return new Collection(['start_date' => ($parseDate['year']-1).'-01-01', 'end_date' => ($parseDate['year']+1).'-12-31']);
-        }
         switch($this->LEAVE_CONFIG_ARRAY[$type]['Period']) {
         case LeavePeriodEnum::SIMPLEYEAR:
             return new Collection(['start_date' => $parseDate['year'].'-01-01', 'end_date' => $parseDate['year'].'-12-31']);
