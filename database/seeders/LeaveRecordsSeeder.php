@@ -14,6 +14,6 @@ class LeaveRecordsSeeder extends Seeder
      */
     public function run()
     {
-        DB::table('leave_records')->truncate();
+        DB::table('leave_records')->where('user_id', 1)->delete();
     }
 }

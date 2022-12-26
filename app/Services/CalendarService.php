@@ -19,7 +19,7 @@ class CalendarService
     // 整理Calendar所有年份
     protected function distinctYears(Collection $calendarRecords)
     {
-        $allYears = $calendarRecords->transform( function($item, $key) {
+        $allYears = $calendarRecords->transform(function($item, $key) {
             return ['year' => date_parse($item['date'])['year']];
         });
         return $allYears->unique('year')->toArray();

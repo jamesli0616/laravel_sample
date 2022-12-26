@@ -166,11 +166,10 @@ class LeaveRecordsService
     public function getYearHeadTailDate(string $date, int $type, bool $isDefault = false)
     {
         $parseDate = date_parse($date);
-        $leavePeriod = $this->LEAVE_CONFIG_ARRAY[$type]['Period'];
         if($isDefault) { // 預設回傳一般年度計算區間 (+1年~-1年)
             return new Collection(['start_date' => ($parseDate['year']-1).'-01-01', 'end_date' => ($parseDate['year']+1).'-12-31']);
         }
-        switch($leavePeriod) {
+        switch($this->LEAVE_CONFIG_ARRAY[$type]['Period']) {
         case LeavePeriodEnum::SIMPLEYEAR:
             return new Collection(['start_date' => $parseDate['year'].'-01-01', 'end_date' => $parseDate['year'].'-12-31']);
         case LeavePeriodEnum::JAPANYEAR: {
@@ -260,10 +259,10 @@ class LeaveRecordsService
     // 判斷假別加總時數是否超過年度上限
     public function checkLeaveYearIsOverLimit(int $userId, int $type, int $willLeaveHours, string $willLeaveStartDate)
     {
-        $calculateDateRange = $this->getYearHeadTailDate($willLeaveStartDate, $type);
-        $leaveTotalHours = $willLeaveHours + $this->getUserLeavedHoursByTypeAndDateRange($userId, $type, $calculateDateRange);
         $leaveLimitDays = $this->LEAVE_CONFIG_ARRAY[$type]['Limit'];
         if($leaveLimitDays == LeaveLimitEnum::INFINITE) return false;
+        $calculateDateRange = $this->getYearHeadTailDate($willLeaveStartDate, $type);
+        $leaveTotalHours = $willLeaveHours + $this->getUserLeavedHoursByTypeAndDateRange($userId, $type, $calculateDateRange);
         if($type == LeaveTypesEnum::FAMILYCARE) {
             if($this->checkLeaveYearIsOverLimit($userId, LeaveTypesEnum::SIMPLE, $willLeaveHours, $willLeaveStartDate)) {
                 throw new CreateLeaveRecordExceptions('合併事假時數超過上限');
